@@ -1,0 +1,45 @@
+import { BrowserRouter, Routes, Route } from 'react-router';
+import { Login } from './pages/Login';
+import { LanguageSelect } from './pages/LanguageSelect';
+import { Setup } from './pages/Setup';
+import { Chat } from './pages/Chat';
+import { Settings } from './pages/Settings';
+import { SetupEN } from './pages/SetupEN';
+import { ChatEN } from './pages/ChatEN';
+import { SettingsEN } from './pages/SettingsEN';
+import { SetupJP } from './pages/SetupJP';
+import { ChatJP } from './pages/ChatJP';
+import { SettingsJP } from './pages/SettingsJP';
+import { Flashcard } from './pages/Flashcard';
+import { Toaster } from './components/ui/sonner';
+import { Navigate } from 'react-router';
+
+export default function App() {
+  return (
+    <>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/select-language" element={<LanguageSelect />} />
+          {/* Chinese → Korean */}
+          <Route path="/setup" element={<Setup />} />
+          <Route path="/chat/:chatId?" element={<Chat />} />
+          <Route path="/settings/:chatId" element={<Settings />} />
+          {/* Chinese → English */}
+          <Route path="/setup-en" element={<SetupEN />} />
+          <Route path="/chat-en/:chatId?" element={<ChatEN />} />
+          <Route path="/settings-en/:chatId" element={<SettingsEN />} />
+          {/* Chinese ↔ Japanese */}
+          <Route path="/setup-jp" element={<SetupJP />} />
+          <Route path="/chat-jp/:chatId?" element={<ChatJP />} />
+          <Route path="/settings-jp/:chatId" element={<SettingsJP />} />
+          {/* Shared */}
+          <Route path="/flashcard" element={<Flashcard />} />
+          <Route path="/onboarding" element={<Navigate to="/setup" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+      <Toaster />
+    </>
+  );
+}
