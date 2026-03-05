@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { ArrowLeft, Upload, Pencil, Check } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { ToneSettingsUI } from '../../components/ToneSettingsUI';
+import { t } from '../../i18n';
 
 interface ChatData {
   id: string;
@@ -24,6 +25,8 @@ export function Settings() {
   const [isPolite, setIsPolite] = useState(true);
   const [vibes, setVibes] = useState<string[]>([]);
   const [personaPrompt, setPersonaPrompt] = useState('');
+  const [chatName, setChatName] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
 
   useEffect(() => {
     const byId = chatId ? localStorage.getItem('chat_' + chatId) : null;
@@ -35,6 +38,7 @@ export function Settings() {
       setIsPolite(data.isPolite ?? true);
       setVibes(data.vibes ?? []);
       setPersonaPrompt(data.personaPrompt || '');
+      setChatName(data.name || '');
     }
   }, [chatId]);
 
@@ -42,6 +46,7 @@ export function Settings() {
     if (chatData) {
       const updatedChat = {
         ...chatData,
+        name: chatName.trim() || chatData.name,
         background: backgroundImage,
         isPolite,
         vibes,
@@ -50,6 +55,10 @@ export function Settings() {
       setChatData(updatedChat);
       localStorage.setItem('currentChat', JSON.stringify(updatedChat));
       localStorage.setItem('chat_' + updatedChat.id, JSON.stringify(updatedChat));
+      // Update chatList with new name
+      const allChats = JSON.parse(localStorage.getItem('chatList') || '[]');
+      const idx = allChats.findIndex((c: any) => c.id === updatedChat.id);
+      if (idx !== -1) { allChats[idx].name = updatedChat.name; localStorage.setItem('chatList', JSON.stringify(allChats)); }
       navigate(-1);
     }
   };
@@ -57,27 +66,51 @@ export function Settings() {
   if (!chatData) return null;
 
   return (
-    <div className="min-h-screen px-6 py-8" style={{ backgroundColor: '#FFFBF5' }}>
+    <div className="min-h-screen px-6 md:px-12 lg:px-24 py-8" style={{ backgroundColor: '#FFFBF5' }}>
+      <div className="max-w-2xl mx-auto">
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
         className="mb-8 flex items-center gap-2 transition-opacity hover:opacity-70"
       >
         <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
-        <span style={{ fontSize: '14px', color: '#6B5B95' }}>Back</span>
+        <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('settings.back')}</span>
       </button>
       {/* Title */}
       <div className="mb-10">
         <h1 className="text-3xl mb-2" style={{ fontWeight: 700, color: '#6B5B95', letterSpacing: '-0.02em' }}>
-          Chat Settings
+          {t('settings.title')}
         </h1>
-        <p style={{ fontSize: '14px', color: '#9B8FA6' }}>{chatData.name}</p>
+        <div className="flex items-center gap-2">
+          {isEditingName ? (
+            <>
+              <input
+                autoFocus
+                value={chatName}
+                onChange={e => setChatName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') setIsEditingName(false); }}
+                className="border-0 outline-none bg-transparent"
+                style={{ fontSize: '14px', color: '#9B8FA6', borderBottom: '1.5px solid #B8A9D4', paddingBottom: '2px' }}
+              />
+              <button onClick={() => setIsEditingName(false)} className="transition-opacity hover:opacity-70">
+                <Check className="w-4 h-4" style={{ color: '#6B5B95' }} />
+              </button>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: '14px', color: '#9B8FA6' }}>{chatName}</p>
+              <button onClick={() => setIsEditingName(true)} className="transition-opacity hover:opacity-70">
+                <Pencil className="w-3.5 h-3.5" style={{ color: '#9B8FA6' }} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
-      <div className="max-w-lg space-y-10">
+      <div className="space-y-10">
         {/* Section 1: Background Image Upload */}
         <div>
           <h2 className="mb-4" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>
-            Set Background Image
+            {t('settings.background')}
           </h2>
           <label
             htmlFor="backgroundUpload"
@@ -91,7 +124,7 @@ export function Settings() {
                 <div className="w-14 h-14 flex items-center justify-center mb-3" style={{ backgroundColor: '#E6E6FA', borderRadius: '16px' }}>
                   <Upload className="w-7 h-7" style={{ color: '#6B5B95' }} />
                 </div>
-                <p style={{ fontSize: '14px', color: '#9B8FA6' }}>Tap to upload</p>
+                <p style={{ fontSize: '14px', color: '#9B8FA6' }}>{t('settings.tapToUpload')}</p>
               </div>
             )}
             <input id="backgroundUpload" type="file" accept="image/*" className="hidden" onChange={e => {
@@ -120,9 +153,10 @@ export function Settings() {
             className="w-full h-14 border-0 shadow-lg"
             style={{ backgroundColor: '#B8A9D4', color: '#FFFFFF', borderRadius: '24px', fontSize: '16px', fontWeight: 600 }}
           >
-            Save Changes
+            {t('settings.save')}
           </Button>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Heart } from 'lucide-react';
+import { Heart, Globe } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
+import { t } from '../../i18n';
 
 export function Login() {
   const navigate = useNavigate();
@@ -16,11 +17,21 @@ export function Login() {
 
   return (
     <div 
-      className="min-h-screen flex flex-col items-center justify-center px-6"
+      className="min-h-screen flex flex-col items-center justify-center px-6 relative"
       style={{
         background: 'linear-gradient(135deg, #E6E6FA 0%, #FFFBF5 100%)',
       }}
     >
+      {/* System Settings Button */}
+      <button
+        onClick={() => navigate('/system-settings')}
+        className="absolute top-6 right-6 w-11 h-11 flex items-center justify-center shadow-md transition-transform hover:scale-105"
+        style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '2px solid #E6E6FA' }}
+        aria-label="System Settings"
+      >
+        <Globe className="w-5 h-5" style={{ color: '#6B5B95' }} />
+      </button>
+
       {/* Logo & Welcome */}
       <div className="text-center mb-12">
         <div className="inline-flex items-center justify-center w-20 h-20 mb-4" style={{ 
@@ -34,10 +45,10 @@ export function Login() {
           color: '#6B5B95',
           letterSpacing: '-0.02em'
         }}>
-          AI for video call demo
+          {t('login.title')}
         </h1>
         <p className="text-base" style={{ color: '#9B8FA6' }}>
-          Make every second count.
+          {t('login.subtitle')}
         </p>
       </div>
 
@@ -46,7 +57,7 @@ export function Login() {
         <div>
           <Input
             type="email"
-            placeholder="Email"
+            placeholder={t('login.email')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="h-14 px-5 border-0 shadow-md"
@@ -62,7 +73,7 @@ export function Login() {
         <div>
           <Input
             type="password"
-            placeholder="Password"
+            placeholder={t('login.password')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="h-14 px-5 border-0 shadow-md"
@@ -88,7 +99,7 @@ export function Login() {
               fontWeight: 600,
             }}
           >
-            Log In
+            {t('login.button')}
           </Button>
         </div>
       </form>
@@ -96,7 +107,7 @@ export function Login() {
       {/* Social Login */}
       <div className="mt-8">
         <p className="text-sm text-center mb-4" style={{ color: '#9B8FA6' }}>
-          Or continue with
+          {t('login.socialHint')}
         </p>
         <div className="flex items-center gap-4">
           <button

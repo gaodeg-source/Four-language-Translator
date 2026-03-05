@@ -45,6 +45,24 @@ Before finalizing your translation, check if the original Chinese text contains 
 FANDOM SEMANTIC SLANG: Accurately translate Chinese fandom-specific terms to their true Korean fandom equivalents.`;
   }
 
+  // Phonetic slang section for Chinese → English translations
+  let phoneticSlangSection = '';
+  if (sourceLang === 'cn' && targetLang === 'en') {
+    phoneticSlangSection = `
+CHINESE PHONETIC SLANG: When you detect Chinese text that phonetically imitates English words or phrases (e.g., 厚礼谢特 = holy shit, 三克油 = thank you, 歪瑞古德 = very good, 拜拜 = bye bye, 奥利给 = slang exclamation), ignore their literal Chinese character meaning and map their pronunciation to the correct original English word/phrase.
+CHINESE INTERNET SLANG: Translate Chinese internet slang and colloquialisms to their natural English equivalents (e.g., 666 = awesome/sick, 牛逼/NB = badass/awesome, 卧槽 = WTF/holy crap, 绝绝子 = absolutely amazing, 破防了 = I can't take it anymore).
+Before finalizing your translation, check if the original Chinese text contains any phonetic or internet slang. If it does, ensure the natural English equivalent is used in the final output.`;
+  }
+
+  // Phonetic slang section for Chinese → Japanese translations
+  let jpSlangSection = '';
+  if (sourceLang === 'cn' && targetLang === 'jp') {
+    jpSlangSection = `
+CHINESE PHONETIC SLANG: When you detect Chinese text that phonetically imitates foreign words (e.g., 厚礼谢特 = holy shit → ホーリーシット or くそっ, 三克油 = thank you → ありがとう, 欧巴 = Korean oppa → オッパ), ignore their literal Chinese character meaning and map to the appropriate Japanese expression.
+CHINESE INTERNET SLANG: Translate Chinese internet slang and colloquialisms to their natural Japanese equivalents (e.g., 666 = すごい, 卧槽 = うわっ/マジかよ, 牛逼 = やばい/すげえ, 绝绝子 = 最高すぎる, 破防了 = もう無理/耐えられない).
+Before finalizing your translation, check if the original Chinese text contains any phonetic or internet slang. If it does, ensure the natural Japanese equivalent is used in the final output.`;
+  }
+
   let prompt = `
 You are a Professional ${srcName}-to-${tgtName} Translator.
 
@@ -55,6 +73,8 @@ Translation Rules (CRITICAL):
 4. Maintain cultural context — adapt culturally specific references where needed.
 5. If user customized the tone, follow the tone instructions strictly.
 ${kpopSection}
+${phoneticSlangSection}
+${jpSlangSection}
 
 Formatting Rules:
 - Do NOT output emojis or text emoticons unless the user's custom persona explicitly requests them.

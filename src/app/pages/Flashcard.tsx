@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { X, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { t } from '../../i18n';
 
 export function Flashcard() {
   const navigate = useNavigate();
@@ -73,10 +74,10 @@ export function Flashcard() {
 
         // Clean up
         URL.revokeObjectURL(url);
-        toast.success('Saved to downloads!');
+        toast.success(t('flashcard.saved'));
       }, 'image/png');
     } catch (error) {
-      toast.error('Failed to save image');
+      toast.error(t('flashcard.saveFailed'));
       console.error(error);
     }
   };
@@ -132,7 +133,7 @@ export function Flashcard() {
       {/* Bottom Hint */}
       <div className="absolute bottom-8 left-0 right-0 text-center">
         <p style={{ fontSize: '14px', color: '#9B8FA6' }}>
-          Tap the download icon to save this flashcard
+          {t('flashcard.hint')}
         </p>
       </div>
     </div>

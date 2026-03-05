@@ -11,6 +11,8 @@ import { SetupJP } from './pages/SetupJP';
 import { ChatJP } from './pages/ChatJP';
 import { SettingsJP } from './pages/SettingsJP';
 import { Flashcard } from './pages/Flashcard';
+import { SystemSettings } from './pages/SystemSettings';
+import { Collections } from './pages/Collections';
 import { Toaster } from './components/ui/sonner';
 import { Navigate } from 'react-router';
 
@@ -35,6 +37,8 @@ export default function App() {
           <Route path="/settings-jp/:chatId" element={<SettingsJP />} />
           {/* Shared */}
           <Route path="/flashcard" element={<Flashcard />} />
+          <Route path="/collections" element={<Collections />} />
+          <Route path="/system-settings" element={<SystemSettings />} />
           <Route path="/onboarding" element={<Navigate to="/setup" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { ArrowLeft } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { ToneSettingsJP } from '../../components/ToneSettingsJP';
-
-const LANG_LABELS: Record<string, string> = { cn: '中文', kr: '한국어', en: 'English', jp: '日本語' };
+import { t, langLabel } from '../../i18n';
 
 export function SetupJP() {
   const navigate = useNavigate();
@@ -42,16 +42,25 @@ export function SetupJP() {
   };
 
   return (
-    <div className="min-h-screen px-6 py-8" style={{ backgroundColor: '#FFFBF5' }}>
+    <div className="min-h-screen px-6 md:px-12 lg:px-24 py-8" style={{ backgroundColor: '#FFFBF5' }}>
+      <div className="max-w-2xl mx-auto">
+      <button
+        onClick={() => navigate(-1)}
+        className="mb-6 flex items-center gap-2 transition-opacity hover:opacity-70"
+      >
+        <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
+        <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('settings.back')}</span>
+      </button>
       <h1 className="text-3xl mb-6" style={{ fontWeight: 700, color: '#6B5B95' }}>
-        Create New Chat ({LANG_LABELS[sourceLang]} → {LANG_LABELS[targetLang]})
+        {t('setup.title')} ({langLabel(sourceLang)} → {langLabel(targetLang)})
       </h1>
-      <div className="max-w-lg space-y-10">
+      <div className="space-y-10">
         <div>
-          <h2 className="mb-4" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>Chat Name</h2>
+          <h2 className="mb-1" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{t('setup.chatName')} <span style={{ color: '#E74C3C' }}>*</span></h2>
+          <p className="mb-4" style={{ fontSize: '12px', color: '#E74C3C' }}>{t('setup.required')}</p>
           <Input
             type="text"
-            placeholder="Enter a chat name..."
+            placeholder={t('setup.chatNamePlaceholder')}
             value={chatName}
             onChange={e => setChatName(e.target.value)}
             className="w-full h-12 px-5 border-0 shadow-md"
@@ -72,9 +81,10 @@ export function SetupJP() {
             className="w-full h-14 border-0 shadow-lg"
             style={{ backgroundColor: '#B8A9D4', color: '#FFFFFF', borderRadius: '24px', fontSize: '16px', fontWeight: 600 }}
           >
-            Start Chat
+            {t('setup.startChat')}
           </Button>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { Settings, Send, Copy, Maximize2, Menu, Plus, LogOut, X } from 'lucide-react';
+import { Settings, Send, Copy, Maximize2, Menu, Plus, X, Star } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
-
-const LANG_LABELS: Record<string, string> = { cn: '中文', kr: '한국어', en: 'English', jp: '日本語' };
+import { t, langLabel } from '../../i18n';
 
 interface Message {
   id: string;
@@ -48,6 +47,7 @@ export function Chat() {
   const [chatList, setChatList] = useState<any[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
+  const [collections, setCollections] = useState<{ input: string; output: string; id: string }[]>([]);
 
   useEffect(() => {
     const byId = chatId ? localStorage.getItem('chat_' + chatId) : null;
@@ -62,6 +62,8 @@ export function Chat() {
     }
     const allChats = JSON.parse(localStorage.getItem('chatList') || '[]');
     setChatList(allChats);
+    const savedCollections = JSON.parse(localStorage.getItem('collections') || '[]');
+    setCollections(savedCollections);
   }, [chatId, navigate]);
 
   useEffect(() => {
@@ -83,7 +85,7 @@ export function Chat() {
     const tempMessage: Message = {
       id: 'loading',
       input: inputText,
-      output: 'Translating...',
+      output: t('chat.translating'),
       timestamp: Date.now(),
     };
     setMessages([...messages, tempMessage]);
@@ -104,9 +106,9 @@ export function Chat() {
       if (data?.choices?.[0]?.message?.content) {
         output = data.choices[0].message.content;
       } else if (data?.error) {
-        toast.error('API Error: ' + data.error);
+        toast.error(t('chat.apiError') + data.error);
       } else {
-        toast.error('Unexpected API response');
+        toast.error(t('chat.unexpectedResponse'));
       }
 
       const filteredMessages = messages.filter(m => m.id !== 'loading');
@@ -126,7 +128,7 @@ export function Chat() {
       localStorage.setItem('chat_' + updatedChat.id, JSON.stringify(updatedChat));
     } catch (error) {
       console.error('Translation failed:', error);
-      toast.error('Translation failed. Is the backend server running?');
+      toast.error(t('chat.translationFailed'));
       setMessages(messages.filter(m => m.id !== 'loading'));
     } finally {
       setLoading(false);
@@ -135,9 +137,9 @@ export function Chat() {
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      toast.success('Copied to clipboard!');
+      toast.success(t('chat.copied'));
     }).catch(() => {
-      toast.error('Failed to copy');
+      toast.error(t('chat.copyFailed'));
     });
   };
 
@@ -146,14 +148,25 @@ export function Chat() {
     navigate('/flashcard');
   };
 
+  const isCollected = (msgId: string) => collections.some(c => c.id === msgId);
+
+  const handleCollect = (msg: Message) => {
+    const exists = collections.some(c => c.id === msg.id);
+    let updated;
+    if (exists) {
+      updated = collections.filter(c => c.id !== msg.id);
+      toast.success(t('chat.uncollected'));
+    } else {
+      updated = [...collections, { id: msg.id, input: getInput(msg), output: getOutput(msg) }];
+      toast.success(t('chat.collected'));
+    }
+    setCollections(updated);
+    localStorage.setItem('collections', JSON.stringify(updated));
+  };
+
   const handleNewChat = () => {
     setSidebarOpen(false);
     navigate('/select-language');
-  };
-
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/');
   };
 
   if (!chatData) return null;
@@ -174,10 +187,10 @@ export function Chat() {
             <X className="w-6 h-6" style={{ color: '#6B5B95' }} />
           </button>
           <div className="flex-1 overflow-y-auto">
-            <h3 className="mb-4" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>Saved Chats</h3>
+            <h3 className="mb-4" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{t('chat.savedChats')}</h3>
             <div className="space-y-2">
               {chatList.length === 0 ? (
-                <p style={{ fontSize: '14px', color: '#9B8FA6' }}>No saved chats yet</p>
+                <p style={{ fontSize: '14px', color: '#9B8FA6' }}>{t('chat.noChats')}</p>
               ) : (
                 chatList.map((chat) => (
                   <button
@@ -188,7 +201,7 @@ export function Chat() {
                   >
                     {chat.name}
                     <span style={{ fontSize: '11px', color: '#9B8FA6', marginLeft: '6px' }}>
-                      {(LANG_LABELS[chat.sourceLang] || chat.lang?.toUpperCase() || 'KR').slice(0,2)}→{(LANG_LABELS[chat.targetLang] || '').slice(0,2) || 'CN'}
+                      {(langLabel(chat.sourceLang) || chat.lang?.toUpperCase() || 'KR').slice(0,2)}→{(langLabel(chat.targetLang) || '').slice(0,2) || 'CN'}
                     </span>
                   </button>
                 ))
@@ -197,10 +210,14 @@ export function Chat() {
           </div>
           <div className="space-y-3 pt-4 border-t" style={{ borderColor: '#E6E6FA' }}>
             <Button onClick={handleNewChat} className="w-full h-12 border-0 shadow-md" style={{ backgroundColor: '#B8A9D4', color: '#FFFFFF', borderRadius: '16px', fontSize: '14px', fontWeight: 600 }}>
-              <Plus className="w-4 h-4 mr-2" /> New Chat
+              <Plus className="w-4 h-4 mr-2" /> {t('chat.newChat')}
             </Button>
-            <button onClick={handleLogout} className="w-full text-center py-2 transition-opacity hover:opacity-70" style={{ fontSize: '14px', color: '#6B5B95' }}>
-              <LogOut className="w-4 h-4 inline mr-2" /> Log Out
+            <button onClick={() => { setSidebarOpen(false); navigate('/collections'); }} className="w-full text-center py-2 transition-opacity hover:opacity-70" style={{ fontSize: '14px', color: '#6B5B95' }}>
+              <Star className="w-4 h-4 inline mr-2" /> {t('chat.collection')}
+            </button>
+            <div style={{ borderTop: '1px solid #E6E6FA', margin: '4px 0' }} />
+            <button onClick={() => { setSidebarOpen(false); navigate('/system-settings'); }} className="w-full text-center py-2 transition-opacity hover:opacity-70" style={{ fontSize: '14px', color: '#6B5B95' }}>
+              <Settings className="w-4 h-4 inline mr-2" /> {t('chat.systemSettings')}
             </button>
           </div>
         </div>
@@ -216,7 +233,7 @@ export function Chat() {
         <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#6B5B95' }}>
           {chatData.name}
           <span style={{ fontSize: '12px', color: '#9B8FA6', marginLeft: '8px' }}>
-            {LANG_LABELS[sourceLang]}→{LANG_LABELS[targetLang]}
+            {langLabel(sourceLang)}→{langLabel(targetLang)}
           </span>
         </h2>
         <button onClick={() => navigate(`/settings/${chatData.id}`)} className="p-2 transition-opacity hover:opacity-70">
@@ -229,7 +246,7 @@ export function Chat() {
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <p style={{ fontSize: '14px', color: '#9B8FA6', textAlign: 'center' }}>
-              Type a message in {LANG_LABELS[sourceLang]} to start translating to {LANG_LABELS[targetLang]}...
+              {t('chat.emptyHint', { source: langLabel(sourceLang), target: langLabel(targetLang) })}
             </p>
           </div>
         ) : (
@@ -253,6 +270,11 @@ export function Chat() {
                       <button onClick={() => handleExpand(getOutput(message))} className="p-2 transition-opacity hover:opacity-60" aria-label="Expand">
                         <Maximize2 className="w-4 h-4" style={{ color: '#6B5B95' }} />
                       </button>
+                      {message.id !== 'loading' && (
+                        <button onClick={() => handleCollect(message)} className="p-2 transition-opacity hover:opacity-60" aria-label="Collect">
+                          <Star className="w-4 h-4" style={{ color: isCollected(message.id) ? '#E8A838' : '#6B5B95', fill: isCollected(message.id) ? '#E8A838' : 'none' }} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -268,7 +290,7 @@ export function Chat() {
         <div className="flex items-center gap-3 max-w-2xl mx-auto">
           <Input
             type="text"
-            placeholder={`Type in ${LANG_LABELS[sourceLang]}...`}
+            placeholder={`${t('chat.typeIn')} ${langLabel(sourceLang)}...`}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}

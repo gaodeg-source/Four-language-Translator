@@ -1,10 +1,11 @@
 import React from 'react';
+import { t } from '../i18n';
 
 const VIBE_OPTIONS_EN = [
-  { key: 'friendly', label: 'Friendly' },
-  { key: 'professional', label: 'Professional' },
-  { key: 'witty', label: 'Witty' },
-  { key: 'concise', label: 'Concise' },
+  { key: 'friendly', labelKey: 'tone.en.vibe.friendly' },
+  { key: 'professional', labelKey: 'tone.en.vibe.professional' },
+  { key: 'witty', labelKey: 'tone.en.vibe.witty' },
+  { key: 'concise', labelKey: 'tone.en.vibe.concise' },
 ];
 
 interface ToneSettingsENProps {
@@ -40,7 +41,7 @@ export const ToneSettingsEN: React.FC<ToneSettingsENProps> = ({
           className={`font-medium text-gray-700 cursor-pointer ${!isFormal ? 'text-purple-700' : ''}`}
           onClick={() => setIsFormal(false)}
         >
-          Informal
+          {t('tone.en.informal')}
         </span>
         <button
           type="button"
@@ -59,13 +60,13 @@ export const ToneSettingsEN: React.FC<ToneSettingsENProps> = ({
           className={`font-medium text-gray-700 cursor-pointer ${isFormal ? 'text-purple-700' : ''}`}
           onClick={() => setIsFormal(true)}
         >
-          Formal
+          {t('tone.en.formal')}
         </span>
       </div>
 
       {/* Vibes Chips */}
       <div>
-        <span className="font-medium text-gray-700 mb-2 block">Vibes:</span>
+        <span className="font-medium text-gray-700 mb-2 block">{t('tone.vibes')}</span>
         <div className="flex flex-wrap gap-2">
           {VIBE_OPTIONS_EN.map(vibe => (
             <button
@@ -74,7 +75,7 @@ export const ToneSettingsEN: React.FC<ToneSettingsENProps> = ({
               className={`px-3 py-1 rounded-full border text-sm transition-colors ${vibes.includes(vibe.key) ? 'bg-purple-200 border-purple-400 text-purple-700' : 'bg-gray-100 border-gray-300 text-gray-700'}`}
               onClick={() => handleVibeToggle(vibe.key)}
             >
-              {vibe.label}
+              {t(vibe.labelKey)}
             </button>
           ))}
         </div>
@@ -82,10 +83,10 @@ export const ToneSettingsEN: React.FC<ToneSettingsENProps> = ({
 
       {/* Persona Textarea */}
       <div>
-        <span className="font-medium text-gray-700 mb-2 block">Fine-tune Persona:</span>
+        <span className="font-medium text-gray-700 mb-2 block">{t('tone.persona')}</span>
         <textarea
           className="w-full min-h-[80px] p-3 border border-gray-300 rounded-lg focus:border-purple-400 focus:ring-1 focus:ring-purple-200 text-gray-700 bg-white"
-          placeholder="Describe your custom persona, tone, or style..."
+          placeholder={t('tone.personaPlaceholder')}
           value={personaPrompt}
           onChange={e => setPersonaPrompt(e.target.value)}
         />

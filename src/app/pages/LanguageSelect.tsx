@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowRight, ArrowLeftRight } from 'lucide-react';
+import { ArrowLeftRight, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { t, langLabel } from '../../i18n';
 
 const LANGUAGES = [
-  { code: 'cn', label: '中文', flag: '🇨🇳' },
-  { code: 'kr', label: '한국어', flag: '🇰🇷' },
-  { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'jp', label: '日本語', flag: '🇯🇵' },
+  { code: 'cn', flag: '🇨🇳' },
+  { code: 'kr', flag: '🇰🇷' },
+  { code: 'en', flag: '🇬🇧' },
+  { code: 'jp', flag: '🇯🇵' },
 ];
 
 // Map target language to the correct setup route
@@ -64,17 +65,24 @@ export function LanguageSelect() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-6"
+      className="min-h-screen flex flex-col items-center justify-center px-6 relative"
       style={{ background: 'linear-gradient(135deg, #E6E6FA 0%, #FFFBF5 100%)' }}
     >
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-6 left-6 flex items-center gap-2 transition-opacity hover:opacity-70"
+      >
+        <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
+        <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('settings.back')}</span>
+      </button>
       <h1
         className="text-3xl mb-2"
         style={{ fontWeight: 700, color: '#6B5B95', letterSpacing: '-0.02em' }}
       >
-        Choose Translation
+        {t('langSelect.title')}
       </h1>
       <p className="text-base mb-10" style={{ color: '#9B8FA6' }}>
-        Select your source and target language
+        {t('langSelect.subtitle')}
       </p>
 
       <div className="w-full max-w-md">
@@ -82,14 +90,14 @@ export function LanguageSelect() {
         <div className="flex items-center gap-3">
           {/* Source dropdown */}
           <div className="flex-1 relative">
-            <label className="block mb-2" style={{ fontSize: '13px', fontWeight: 600, color: '#9B8FA6' }}>From</label>
+            <label className="block mb-2" style={{ fontSize: '13px', fontWeight: 600, color: '#9B8FA6' }}>{t('langSelect.from')}</label>
             <button
               onClick={() => { setSourceOpen(!sourceOpen); setTargetOpen(false); }}
               className="w-full h-16 flex items-center gap-3 px-5 shadow-md transition-all hover:shadow-lg"
               style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', border: sourceOpen ? '2px solid #B8A9D4' : '2px solid #E6E6FA' }}
             >
               <span style={{ fontSize: '26px' }}>{sourceLang.flag}</span>
-              <span style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{sourceLang.label}</span>
+              <span style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{langLabel(sourceLang.code)}</span>
               <svg className="ml-auto w-4 h-4" style={{ color: '#9B8FA6', transform: sourceOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
             </button>
             {sourceOpen && (
@@ -102,7 +110,7 @@ export function LanguageSelect() {
                     style={{ backgroundColor: lang.code === source ? '#F3EEFF' : 'transparent' }}
                   >
                     <span style={{ fontSize: '22px' }}>{lang.flag}</span>
-                    <span style={{ fontSize: '15px', fontWeight: lang.code === source ? 700 : 500, color: '#6B5B95' }}>{lang.label}</span>
+                    <span style={{ fontSize: '15px', fontWeight: lang.code === source ? 700 : 500, color: '#6B5B95' }}>{langLabel(lang.code)}</span>
                   </button>
                 ))}
               </div>
@@ -120,14 +128,14 @@ export function LanguageSelect() {
 
           {/* Target dropdown */}
           <div className="flex-1 relative">
-            <label className="block mb-2" style={{ fontSize: '13px', fontWeight: 600, color: '#9B8FA6' }}>To</label>
+            <label className="block mb-2" style={{ fontSize: '13px', fontWeight: 600, color: '#9B8FA6' }}>{t('langSelect.to')}</label>
             <button
               onClick={() => { setTargetOpen(!targetOpen); setSourceOpen(false); }}
               className="w-full h-16 flex items-center gap-3 px-5 shadow-md transition-all hover:shadow-lg"
               style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', border: targetOpen ? '2px solid #B8A9D4' : '2px solid #E6E6FA' }}
             >
               <span style={{ fontSize: '26px' }}>{targetLang.flag}</span>
-              <span style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{targetLang.label}</span>
+              <span style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{langLabel(targetLang.code)}</span>
               <svg className="ml-auto w-4 h-4" style={{ color: '#9B8FA6', transform: targetOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
             </button>
             {targetOpen && (
@@ -140,7 +148,7 @@ export function LanguageSelect() {
                     style={{ backgroundColor: lang.code === target ? '#F3EEFF' : 'transparent' }}
                   >
                     <span style={{ fontSize: '22px' }}>{lang.flag}</span>
-                    <span style={{ fontSize: '15px', fontWeight: lang.code === target ? 700 : 500, color: '#6B5B95' }}>{lang.label}</span>
+                    <span style={{ fontSize: '15px', fontWeight: lang.code === target ? 700 : 500, color: '#6B5B95' }}>{langLabel(lang.code)}</span>
                   </button>
                 ))}
               </div>
@@ -148,20 +156,11 @@ export function LanguageSelect() {
           </div>
         </div>
 
-        {/* Preview */}
-        <div className="flex items-center justify-center gap-3 mt-8 mb-8">
-          <span style={{ fontSize: '32px' }}>{sourceLang.flag}</span>
-          <span style={{ fontSize: '15px', fontWeight: 600, color: '#6B5B95' }}>{sourceLang.label}</span>
-          <ArrowRight className="w-5 h-5 mx-1" style={{ color: '#B8A9D4' }} />
-          <span style={{ fontSize: '32px' }}>{targetLang.flag}</span>
-          <span style={{ fontSize: '15px', fontWeight: 600, color: '#6B5B95' }}>{targetLang.label}</span>
-        </div>
-
         {/* Continue button */}
         <Button
           onClick={handleContinue}
           disabled={source === target}
-          className="w-full h-14 border-0 shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full h-14 border-0 shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98] mt-8"
           style={{
             backgroundColor: source === target ? '#D8D0E3' : '#B8A9D4',
             color: '#FFFFFF',
@@ -171,7 +170,7 @@ export function LanguageSelect() {
             opacity: source === target ? 0.5 : 1,
           }}
         >
-          Continue
+          {t('langSelect.continue')}
         </Button>
       </div>
 
