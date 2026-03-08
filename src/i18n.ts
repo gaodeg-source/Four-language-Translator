@@ -181,6 +181,12 @@ const translations: Record<string, Record<SystemLang, string>> = {
     kr: '복사 실패',
     jp: 'コピーに失敗しました',
   },
+  'chat.ttsError': {
+    en: 'Failed to play audio',
+    cn: '语音播放失败',
+    kr: '오디오 재생에 실패했습니다',
+    jp: '音声の再生に失敗しました',
+  },
   'chat.apiError': {
     en: 'API Error: ',
     cn: 'API 错误：',
@@ -260,6 +266,18 @@ const translations: Record<string, Record<SystemLang, string>> = {
     cn: '保存更改',
     kr: '변경사항 저장',
     jp: '変更を保存',
+  },
+  'settings.voice': {
+    en: 'Voice Model',
+    cn: '语音模型',
+    kr: '음성 모델',
+    jp: '音声モデル',
+  },
+  'settings.voiceDefault': {
+    en: 'Default (auto by tone)',
+    cn: '默认（根据语气自动选择）',
+    kr: '기본값 (어조에 따라 자동)',
+    jp: 'デフォルト（トーンに応じて自動）',
   },
   'settings.chatName': {
     en: 'Chat Name',
@@ -459,6 +477,7 @@ const translations: Record<string, Record<SystemLang, string>> = {
     kr: '로그아웃',
     jp: 'ログアウト',
   },
+
 };
 
 /** Get the current system language from localStorage, default to 'en' */

@@ -26,15 +26,15 @@ export function SystemSettings() {
 
   return (
     <div className="min-h-screen px-6 md:px-12 lg:px-24 py-8" style={{ backgroundColor: '#FFFBF5' }}>
-      <div className="max-w-2xl mx-auto">
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="mb-8 flex items-center gap-2 transition-opacity hover:opacity-70"
+        className="fixed top-6 left-6 z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
       >
         <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
         <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('sysSettings.back')}</span>
       </button>
+      <div className="max-w-2xl mx-auto pt-10">
 
       {/* Title */}
       <div className="mb-10">

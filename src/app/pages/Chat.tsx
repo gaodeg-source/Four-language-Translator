@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { Settings, Send, Copy, Maximize2, Menu, Plus, X, Star } from 'lucide-react';
+import { Settings, Send, Copy, Maximize2, Menu, Plus, X, Star, Volume2 } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
@@ -27,6 +27,7 @@ interface ChatData {
   toneMode: string;
   horrificMode?: string;
   background: string | null;
+  voice?: string;
   messages: Message[];
 }
 
@@ -48,22 +49,29 @@ export function Chat() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [collections, setCollections] = useState<{ input: string; output: string; id: string }[]>([]);
+  const [playingId, setPlayingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const byId = chatId ? localStorage.getItem('chat_' + chatId) : null;
-    const stored = byId || localStorage.getItem('currentChat');
-    if (stored) {
-      const data = JSON.parse(stored);
-      setChatData(data);
-      setMessages(data.messages || []);
-      localStorage.setItem('currentChat', stored);
-    } else {
-      navigate('/setup');
-    }
-    const allChats = JSON.parse(localStorage.getItem('chatList') || '[]');
-    setChatList(allChats);
-    const savedCollections = JSON.parse(localStorage.getItem('collections') || '[]');
-    setCollections(savedCollections);
+    const loadData = () => {
+      const byId = chatId ? localStorage.getItem('chat_' + chatId) : null;
+      const stored = byId || localStorage.getItem('currentChat');
+      if (stored) {
+        const data = JSON.parse(stored);
+        setChatData(data);
+        setMessages(data.messages || []);
+        localStorage.setItem('currentChat', stored);
+      } else {
+        navigate('/setup');
+      }
+      const allChats = JSON.parse(localStorage.getItem('chatList') || '[]');
+      setChatList(allChats);
+      const savedCollections = JSON.parse(localStorage.getItem('collections') || '[]');
+      setCollections(savedCollections);
+    };
+    loadData();
+    // Re-read when navigating back (e.g. from Settings)
+    window.addEventListener('popstate', loadData);
+    return () => window.removeEventListener('popstate', loadData);
   }, [chatId, navigate]);
 
   useEffect(() => {
@@ -146,6 +154,34 @@ export function Chat() {
   const handleExpand = (text: string) => {
     localStorage.setItem('flashcardText', text);
     navigate('/flashcard');
+  };
+
+  const handleSpeak = async (text: string, msgId: string) => {
+    if (playingId === msgId) return;
+    setPlayingId(msgId);
+    try {
+      const res = await fetch('http://localhost:3001/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          targetLang: chatData?.targetLang || 'kr',
+          isFormal: chatData?.isPolite !== false,
+          isPolite: chatData?.isPolite,
+          voice: chatData?.voice || '',
+        }),
+      });
+      if (!res.ok) throw new Error('TTS failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onended = () => { setPlayingId(null); URL.revokeObjectURL(url); };
+      audio.onerror = () => { setPlayingId(null); URL.revokeObjectURL(url); };
+      await audio.play();
+    } catch {
+      setPlayingId(null);
+      toast.error(t('chat.ttsError'));
+    }
   };
 
   const isCollected = (msgId: string) => collections.some(c => c.id === msgId);
@@ -270,6 +306,11 @@ export function Chat() {
                       <button onClick={() => handleExpand(getOutput(message))} className="p-2 transition-opacity hover:opacity-60" aria-label="Expand">
                         <Maximize2 className="w-4 h-4" style={{ color: '#6B5B95' }} />
                       </button>
+                      {message.id !== 'loading' && (
+                        <button onClick={() => handleSpeak(getOutput(message), message.id)} className="p-2 transition-opacity hover:opacity-60" aria-label="Listen" disabled={playingId === message.id}>
+                          <Volume2 className="w-4 h-4" style={{ color: playingId === message.id ? '#E8A838' : '#6B5B95' }} />
+                        </button>
+                      )}
                       {message.id !== 'loading' && (
                         <button onClick={() => handleCollect(message)} className="p-2 transition-opacity hover:opacity-60" aria-label="Collect">
                           <Star className="w-4 h-4" style={{ color: isCollected(message.id) ? '#E8A838' : '#6B5B95', fill: isCollected(message.id) ? '#E8A838' : 'none' }} />

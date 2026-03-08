@@ -70,7 +70,7 @@ export function LanguageSelect() {
     >
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-6 left-6 flex items-center gap-2 transition-opacity hover:opacity-70"
+        className="fixed top-6 left-6 z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
       >
         <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
         <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('settings.back')}</span>

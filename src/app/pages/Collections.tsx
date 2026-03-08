@@ -30,7 +30,7 @@ export function Collections() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FFFBF5' }}>
       {/* Header */}
-      <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: '1px solid #E6E6FA' }}>
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center gap-3 px-6 py-4" style={{ borderBottom: '1px solid #E6E6FA', backgroundColor: '#FFFBF5' }}>
         <button onClick={() => navigate(-1)} className="p-2 transition-opacity hover:opacity-60">
           <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
         </button>
@@ -38,7 +38,7 @@ export function Collections() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pt-16">
         <div className="max-w-2xl mx-auto px-6 md:px-12 lg:px-24 py-6">
           {collections.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20">

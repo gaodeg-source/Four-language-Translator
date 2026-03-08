@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ArrowLeft, Upload, Pencil, Check } from 'lucide-react';
+import { ArrowLeft, Upload, Pencil, Check, ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { ToneSettingsEN } from '../../components/ToneSettingsEN';
-import { t } from '../../i18n';
+import { t, getSystemLang } from '../../i18n';
+import { getVoiceLabel } from './VoiceSelect';
 
 interface ChatData {
   id: string;
@@ -27,6 +28,7 @@ export function SettingsEN() {
   const [personaPrompt, setPersonaPrompt] = useState('');
   const [chatName, setChatName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
+  const [voice, setVoice] = useState('');
 
   useEffect(() => {
     const byId = chatId ? localStorage.getItem('chat_' + chatId) : null;
@@ -39,6 +41,13 @@ export function SettingsEN() {
       setVibes(data.vibes ?? []);
       setPersonaPrompt(data.personaPrompt || '');
       setChatName(data.name || '');
+      const pending = localStorage.getItem('_pendingVoice');
+      if (pending !== null) {
+        setVoice(pending);
+        localStorage.removeItem('_pendingVoice');
+      } else {
+        setVoice(data.voice || '');
+      }
     }
   }, [chatId]);
 
@@ -51,6 +60,7 @@ export function SettingsEN() {
         isFormal,
         vibes,
         personaPrompt,
+        voice,
       };
       setChatData(updatedChat);
       localStorage.setItem('currentChatEN', JSON.stringify(updatedChat));
@@ -66,15 +76,15 @@ export function SettingsEN() {
 
   return (
     <div className="min-h-screen px-6 md:px-12 lg:px-24 py-8" style={{ backgroundColor: '#FFFBF5' }}>
-      <div className="max-w-2xl mx-auto">
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="mb-8 flex items-center gap-2 transition-opacity hover:opacity-70"
+        className="fixed top-6 left-6 z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
       >
         <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
         <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('settings.back')}</span>
       </button>
+      <div className="max-w-2xl mx-auto pt-10">
       {/* Title */}
       <div className="mb-10">
         <h1 className="text-3xl mb-2" style={{ fontWeight: 700, color: '#6B5B95', letterSpacing: '-0.02em' }}>
@@ -145,6 +155,18 @@ export function SettingsEN() {
           personaPrompt={personaPrompt}
           setPersonaPrompt={setPersonaPrompt}
         />
+        {/* Voice Model */}
+        <div>
+          <h2 className="mb-4" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{t('settings.voice')}</h2>
+          <button
+            onClick={() => { localStorage.setItem('_pendingVoice', voice); navigate('/voice-select'); }}
+            className="w-full flex items-center justify-between px-4 h-12 shadow-md cursor-pointer"
+            style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: 'none' }}
+          >
+            <span style={{ fontSize: '14px', color: '#6B5B95' }}>{getVoiceLabel(voice, getSystemLang())}</span>
+            <ChevronRight className="w-4 h-4" style={{ color: '#9B8FA6' }} />
+          </button>
+        </div>
         {/* Save Button */}
         <div className="pt-4">
           <Button
