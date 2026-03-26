@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 import { t, langLabel } from '../../i18n';
+import { apiUrl } from '../lib/apiBase';
 
 interface Message {
   id: string;
@@ -99,7 +100,7 @@ export function Chat() {
     setMessages([...messages, tempMessage]);
 
     try {
-      const resp = await fetch('http://localhost:3001/api/translate', {
+      const resp = await fetch(apiUrl('/api/translate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -160,7 +161,7 @@ export function Chat() {
     if (playingId === msgId) return;
     setPlayingId(msgId);
     try {
-      const res = await fetch('http://localhost:3001/api/tts', {
+      const res = await fetch(apiUrl('/api/tts'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

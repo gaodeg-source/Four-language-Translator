@@ -101,7 +101,7 @@ app.use(cors());
 app.use(express.json());
 
 // Universal translate endpoint
-app.post('/api/translate', async (req, res) => {
+app.post(['/api/translate', '/translate'], async (req, res) => {
   const { message, sourceLang, targetLang } = req.body;
   const srcName = LANG_NAMES[sourceLang] || sourceLang;
   const tgtName = LANG_NAMES[targetLang] || targetLang;
@@ -132,20 +132,20 @@ app.post('/api/translate', async (req, res) => {
 });
 
 // Legacy endpoints (redirect to universal)
-app.post('/api/chat', (req, res) => {
+app.post(['/api/chat', '/chat'], (req, res) => {
   req.body.sourceLang = req.body.sourceLang || 'cn';
   req.body.targetLang = req.body.targetLang || 'kr';
   app.handle(Object.assign(req, { url: '/api/translate' }), res);
 });
 
-app.post('/api/chat-en', (req, res) => {
+app.post(['/api/chat-en', '/chat-en'], (req, res) => {
   req.body.sourceLang = req.body.sourceLang || 'cn';
   req.body.targetLang = req.body.targetLang || 'en';
   app.handle(Object.assign(req, { url: '/api/translate' }), res);
 });
 
 // TTS endpoint
-app.post('/api/tts', async (req, res) => {
+app.post(['/api/tts', '/tts'], async (req, res) => {
   const { text, targetLang, isFormal, isPolite, voice: userVoice } = req.body;
   if (!text) return res.status(400).json({ error: 'Missing text' });
 
@@ -198,6 +198,11 @@ app.post('/api/tts', async (req, res) => {
   }
 });
 
-app.listen(3001, () => {
-  console.log('API server listening on port 3001');
-});
+if (require.main === module) {
+  const port = Number(process.env.PORT) || 3001;
+  app.listen(port, () => {
+    console.log(`API server listening on port ${port}`);
+  });
+}
+
+module.exports = app;

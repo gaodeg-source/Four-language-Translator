@@ -3,6 +3,7 @@ import { useState, useRef } from 'react';
 import { ArrowLeft, Mic, Check } from 'lucide-react';
 import { t, getSystemLang } from '../../i18n';
 import { toast } from 'sonner';
+import { apiUrl } from '../lib/apiBase';
 
 type Lang = 'en' | 'cn' | 'kr' | 'jp';
 
@@ -55,7 +56,7 @@ export function VoiceSelect() {
     }
     setPlayingId(voiceId);
     try {
-      const res = await fetch('http://localhost:3001/api/tts', {
+      const res = await fetch(apiUrl('/api/tts'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
