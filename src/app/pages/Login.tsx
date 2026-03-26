@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Heart, Globe } from 'lucide-react';
+import { Heart, Languages } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { t } from '../../i18n';
@@ -22,14 +22,15 @@ export function Login() {
         background: 'linear-gradient(135deg, #E6E6FA 0%, #FFFBF5 100%)',
       }}
     >
-      {/* System Settings Button */}
+      {/* Interface Language Button */}
       <button
         onClick={() => navigate('/system-settings')}
-        className="absolute top-6 right-6 w-11 h-11 flex items-center justify-center shadow-md transition-transform hover:scale-105"
+        className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2.5 shadow-md transition-transform hover:scale-105"
         style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '2px solid #E6E6FA' }}
-        aria-label="System Settings"
+        aria-label={t('sysSettings.langTitle')}
       >
-        <Globe className="w-5 h-5" style={{ color: '#6B5B95' }} />
+        <Languages className="w-5 h-5 shrink-0" style={{ color: '#6B5B95' }} />
+        <span className="text-sm font-medium whitespace-nowrap" style={{ color: '#6B5B95' }}>{t('sysSettings.langTitle')}</span>
       </button>
 
       {/* Logo & Welcome */}

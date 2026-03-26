@@ -406,7 +406,43 @@ const translations: Record<string, Record<SystemLang, string>> = {
     jp: '簡潔',
   },
 
-  // ── Shared Tone Settings labels ──
+  // ── Shared Tone / Vibes (风格) ──
+  'tone.vibe.cute': {
+    en: 'Cutesy',
+    cn: '可爱',
+    kr: '귀여운',
+    jp: 'かわいい',
+  },
+  'tone.vibe.playful': {
+    en: 'Playful',
+    cn: '调皮',
+    kr: '장난스러운',
+    jp: 'いたずら',
+  },
+  'tone.vibe.coquettish': {
+    en: 'Coquettish',
+    cn: '撒娇',
+    kr: '애교',
+    jp: '甘え',
+  },
+  'tone.vibe.natural': {
+    en: 'Natural',
+    cn: '自然',
+    kr: '자연스러운',
+    jp: '自然',
+  },
+  'tone.vibe.concise': {
+    en: 'Concise',
+    cn: '简短',
+    kr: '간결한',
+    jp: '簡潔',
+  },
+  'tone.vibe.formal': {
+    en: 'Formal',
+    cn: '正式',
+    kr: '공식',
+    jp: 'フォーマル',
+  },
   'tone.vibes': {
     en: 'Vibes:',
     cn: '风格：',

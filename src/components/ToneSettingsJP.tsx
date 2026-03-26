@@ -2,10 +2,12 @@ import React from 'react';
 import { t } from '../i18n';
 
 const VIBE_OPTIONS_JP = [
-  { key: 'kawaii', labelKey: 'tone.jp.vibe.kawaii' },
-  { key: 'otaku', labelKey: 'tone.jp.vibe.otaku' },
-  { key: 'business', labelKey: 'tone.jp.vibe.business' },
-  { key: 'concise', labelKey: 'tone.jp.vibe.concise' },
+  { key: 'cute', labelKey: 'tone.vibe.cute' },
+  { key: 'playful', labelKey: 'tone.vibe.playful' },
+  { key: 'coquettish', labelKey: 'tone.vibe.coquettish' },
+  { key: 'natural', labelKey: 'tone.vibe.natural' },
+  { key: 'concise', labelKey: 'tone.vibe.concise' },
+  { key: 'formal', labelKey: 'tone.vibe.formal' },
 ];
 
 interface ToneSettingsJPProps {

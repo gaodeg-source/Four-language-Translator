@@ -19,10 +19,13 @@ export function Setup() {
   const targetLang = direction.targetLang || 'kr';
 
   const handleStartChat = () => {
-    if (!idolName.trim()) return;
+    const savedChats = JSON.parse(localStorage.getItem('chatList') || '[]');
+    const sameDir = savedChats.filter((c: { sourceLang?: string; targetLang?: string }) => c.sourceLang === sourceLang && c.targetLang === targetLang);
+    const index = sameDir.length + 1;
+    const displayName = idolName.trim() || `${langLabel(sourceLang)} -> ${langLabel(targetLang)} ${index}`;
     const chatData = {
       id: Date.now().toString(),
-      name: idolName,
+      name: displayName,
       lang: 'kr',
       sourceLang,
       targetLang,
@@ -35,8 +38,7 @@ export function Setup() {
     };
     localStorage.setItem('currentChat', JSON.stringify(chatData));
     localStorage.setItem('chat_' + chatData.id, JSON.stringify(chatData));
-    const savedChats = JSON.parse(localStorage.getItem('chatList') || '[]');
-    savedChats.push({ id: chatData.id, name: idolName, lang: 'kr', sourceLang, targetLang });
+    savedChats.push({ id: chatData.id, name: displayName, lang: 'kr', sourceLang, targetLang });
     localStorage.setItem('chatList', JSON.stringify(savedChats));
     navigate(`/chat/${chatData.id}`);
   };
@@ -57,8 +59,8 @@ export function Setup() {
       <div className="space-y-10">
         {/* Idol Name Input */}
         <div>
-          <h2 className="mb-1" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{t('setup.chatName')} <span style={{ color: '#E74C3C' }}>*</span></h2>
-          <p className="mb-4" style={{ fontSize: '12px', color: '#E74C3C' }}>{t('setup.required')}</p>
+          <h2 className="mb-1" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{t('setup.chatName')}</h2>
+          <p className="mb-4" style={{ fontSize: '12px', color: '#9B8FA6' }}>{t('setup.chatNamePlaceholder')}</p>
           <Input
             type="text"
             placeholder={t('setup.chatNamePlaceholder')}

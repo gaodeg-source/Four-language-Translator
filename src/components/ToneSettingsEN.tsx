@@ -2,10 +2,12 @@ import React from 'react';
 import { t } from '../i18n';
 
 const VIBE_OPTIONS_EN = [
-  { key: 'friendly', labelKey: 'tone.en.vibe.friendly' },
-  { key: 'professional', labelKey: 'tone.en.vibe.professional' },
-  { key: 'witty', labelKey: 'tone.en.vibe.witty' },
-  { key: 'concise', labelKey: 'tone.en.vibe.concise' },
+  { key: 'cute', labelKey: 'tone.vibe.cute' },
+  { key: 'playful', labelKey: 'tone.vibe.playful' },
+  { key: 'coquettish', labelKey: 'tone.vibe.coquettish' },
+  { key: 'natural', labelKey: 'tone.vibe.natural' },
+  { key: 'concise', labelKey: 'tone.vibe.concise' },
+  { key: 'formal', labelKey: 'tone.vibe.formal' },
 ];
 
 interface ToneSettingsENProps {

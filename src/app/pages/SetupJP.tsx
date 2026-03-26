@@ -19,10 +19,13 @@ export function SetupJP() {
   const targetLang = direction.targetLang || 'jp';
 
   const handleStartChat = () => {
-    if (!chatName.trim()) return;
+    const savedChats = JSON.parse(localStorage.getItem('chatList') || '[]');
+    const sameDir = savedChats.filter((c: { sourceLang?: string; targetLang?: string }) => c.sourceLang === sourceLang && c.targetLang === targetLang);
+    const index = sameDir.length + 1;
+    const displayName = chatName.trim() || `${langLabel(sourceLang)} -> ${langLabel(targetLang)} ${index}`;
     const chatData = {
       id: Date.now().toString(),
-      name: chatName,
+      name: displayName,
       lang: 'jp',
       sourceLang,
       targetLang,
@@ -35,8 +38,7 @@ export function SetupJP() {
     };
     localStorage.setItem('currentChatJP', JSON.stringify(chatData));
     localStorage.setItem('chat_' + chatData.id, JSON.stringify(chatData));
-    const savedChats = JSON.parse(localStorage.getItem('chatList') || '[]');
-    savedChats.push({ id: chatData.id, name: chatName, lang: 'jp', sourceLang, targetLang });
+    savedChats.push({ id: chatData.id, name: displayName, lang: 'jp', sourceLang, targetLang });
     localStorage.setItem('chatList', JSON.stringify(savedChats));
     navigate(`/chat-jp/${chatData.id}`);
   };
@@ -56,8 +58,8 @@ export function SetupJP() {
       </h1>
       <div className="space-y-10">
         <div>
-          <h2 className="mb-1" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{t('setup.chatName')} <span style={{ color: '#E74C3C' }}>*</span></h2>
-          <p className="mb-4" style={{ fontSize: '12px', color: '#E74C3C' }}>{t('setup.required')}</p>
+          <h2 className="mb-1" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{t('setup.chatName')}</h2>
+          <p className="mb-4" style={{ fontSize: '12px', color: '#9B8FA6' }}>{t('setup.chatNamePlaceholder')}</p>
           <Input
             type="text"
             placeholder={t('setup.chatNamePlaceholder')}

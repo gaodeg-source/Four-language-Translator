@@ -2,10 +2,12 @@ import React from 'react';
 import { t } from '../i18n';
 
 const VIBE_OPTIONS = [
-  { key: 'aegyo', labelKey: 'tone.kr.vibe.aegyo' },
-  { key: 'flirty', labelKey: 'tone.kr.vibe.flirty' },
-  { key: 'jujeop', labelKey: 'tone.kr.vibe.jujeop' },
-  { key: 'rush', labelKey: 'tone.kr.vibe.rush' },
+  { key: 'cute', labelKey: 'tone.vibe.cute' },
+  { key: 'playful', labelKey: 'tone.vibe.playful' },
+  { key: 'coquettish', labelKey: 'tone.vibe.coquettish' },
+  { key: 'natural', labelKey: 'tone.vibe.natural' },
+  { key: 'concise', labelKey: 'tone.vibe.concise' },
+  { key: 'formal', labelKey: 'tone.vibe.formal' },
 ];
 
 interface ToneSettingsUIProps {
