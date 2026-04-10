@@ -286,14 +286,16 @@ export function Login() {
           type="button"
           onClick={handleGoogleOAuth}
           disabled={oauthLoading || loginLoading}
-          className="w-full h-14 border-0 shadow-md flex items-center justify-center gap-3"
+          className="w-full border-0 flex items-center justify-center gap-2"
           style={{
             backgroundColor: '#FFFFFF',
-            color: '#6B5B95',
-            borderRadius: '24px',
-            border: '1px solid #E6E6FA',
-            fontSize: '16px',
-            fontWeight: 600,
+            color: '#3C4043',
+            borderRadius: '4px',
+            border: '1px solid #DADCE0',
+            height: '40px',
+            fontSize: '14px',
+            fontWeight: 500,
+            boxShadow: 'none',
           }}
         >
           <GoogleLogo />
