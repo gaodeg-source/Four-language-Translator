@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { t } from '../../i18n';
 import { toast } from 'sonner';
 import { apiUrl } from '../lib/apiBase';
+import { getMostRecentChatPath } from '../lib/chatHistory';
 
 const GOOGLE_OAUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_OAUTH_SCOPES = 'openid profile email';
@@ -63,6 +64,11 @@ export function Login() {
       }
 
       try {
+        const goNext = async () => {
+          const nextPath = await getMostRecentChatPath();
+          navigate(nextPath || '/select-language');
+        };
+
         const profileResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -90,13 +96,22 @@ export function Login() {
         localStorage.setItem('authProvider', 'google');
         localStorage.setItem('googleAccessToken', accessToken);
         localStorage.setItem('googleUser', JSON.stringify(profile));
-        navigate('/select-language');
+        await goNext();
       } catch {
         toast.error(t('login.oauthFailed'));
       }
     };
 
-    handleOAuthCallback();
+    const maybeRedirectIfLoggedIn = async () => {
+      if (window.location.hash.includes('access_token') || window.location.hash.includes('error=')) return;
+      const userId = localStorage.getItem('authUserId');
+      if (!userId) return;
+      const nextPath = await getMostRecentChatPath();
+      navigate(nextPath || '/select-language');
+    };
+
+    void handleOAuthCallback();
+    void maybeRedirectIfLoggedIn();
   }, [navigate]);
 
   const handleGoogleOAuth = () => {
@@ -149,7 +164,8 @@ export function Login() {
         localStorage.setItem('authProvider', 'password');
         localStorage.setItem('authUserId', data.user.id);
         localStorage.setItem('authUser', JSON.stringify(data.user));
-        navigate('/select-language');
+        const nextPath = await getMostRecentChatPath();
+        navigate(nextPath || '/select-language');
       } catch {
         toast.error(t('login.loginFailed'));
       } finally {

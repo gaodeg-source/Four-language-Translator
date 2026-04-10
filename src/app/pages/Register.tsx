@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 import { t } from '../../i18n';
 import { apiUrl } from '../lib/apiBase';
+import { getMostRecentChatPath } from '../lib/chatHistory';
 
 export function Register() {
   const navigate = useNavigate();
@@ -46,7 +47,8 @@ export function Register() {
       localStorage.setItem('authUserId', data.user.id);
       localStorage.setItem('authUser', JSON.stringify(data.user));
       toast.success(t('register.success'));
-      navigate('/select-language');
+      const nextPath = await getMostRecentChatPath();
+      navigate(nextPath || '/select-language');
     } catch {
       toast.error(t('register.failed'));
     } finally {

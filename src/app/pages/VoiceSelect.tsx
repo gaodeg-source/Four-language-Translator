@@ -29,13 +29,13 @@ export const VOICES = [
 
 export function getVoiceLabel(voiceId: string, lang: string): string {
   const v = VOICES.find(v => v.id === voiceId);
-  const l = (lang || 'en') as Lang;
+  const l = (lang || 'cn') as Lang;
   return v ? (v.label[l] || v.label.en) : (VOICES[0].label[l] || VOICES[0].label.en);
 }
 
 export function VoiceSelect() {
   const navigate = useNavigate();
-  const lang = (getSystemLang() || 'en') as Lang;
+  const lang = (getSystemLang() || 'cn') as Lang;
   const [selected, setSelected] = useState(() => localStorage.getItem('_pendingVoice') || '');
   const [playingId, setPlayingId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);

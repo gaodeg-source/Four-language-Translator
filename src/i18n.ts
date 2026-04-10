@@ -702,11 +702,11 @@ const translations: Record<string, Record<SystemLang, string>> = {
 
 };
 
-/** Get the current system language from localStorage, default to 'en' */
+/** Get the current system language from localStorage, default to 'cn' */
 export function getSystemLang(): SystemLang {
   const lang = localStorage.getItem('systemLang');
   if (lang === 'cn' || lang === 'kr' || lang === 'jp' || lang === 'en') return lang;
-  return 'en';
+  return 'cn';
 }
 
 /** Set system language */
