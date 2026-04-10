@@ -1,14 +1,110 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Heart, Languages } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { t } from '../../i18n';
+import { toast } from 'sonner';
+
+const GOOGLE_OAUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth';
+const GOOGLE_OAUTH_SCOPES = 'openid profile email';
+const OAUTH_STATE_KEY = 'google_oauth_state';
+
+function parseHashParams(hash: string): Record<string, string> {
+  const fragment = hash.startsWith('#') ? hash.slice(1) : hash;
+  const params: Record<string, string> = {};
+  for (const pair of fragment.split('&')) {
+    if (!pair) continue;
+    const [rawKey, rawValue = ''] = pair.split('=');
+    params[decodeURIComponent(rawKey)] = decodeURIComponent(rawValue);
+  }
+  return params;
+}
+
+function createRandomState(): string {
+  const randomValues = new Uint32Array(2);
+  window.crypto.getRandomValues(randomValues);
+  return Array.from(randomValues).map((v) => v.toString(16)).join('');
+}
 
 export function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [oauthLoading, setOauthLoading] = useState(false);
+
+  useEffect(() => {
+    const handleOAuthCallback = async () => {
+      if (!window.location.hash.includes('access_token') && !window.location.hash.includes('error=')) {
+        return;
+      }
+
+      const params = parseHashParams(window.location.hash);
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+
+      if (params.error) {
+        toast.error(params.error === 'access_denied' ? t('login.oauthDenied') : `${t('login.oauthFailed')}: ${params.error}`);
+        return;
+      }
+
+      const savedState = localStorage.getItem(OAUTH_STATE_KEY);
+      if (!params.state || !savedState || params.state !== savedState) {
+        toast.error(t('login.oauthStateMismatch'));
+        return;
+      }
+      localStorage.removeItem(OAUTH_STATE_KEY);
+
+      const accessToken = params.access_token;
+      if (!accessToken) {
+        toast.error(t('login.oauthFailed'));
+        return;
+      }
+
+      try {
+        const profileResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        if (!profileResp.ok) throw new Error('Failed to fetch profile');
+        const profile = await profileResp.json();
+
+        localStorage.setItem('authProvider', 'google');
+        localStorage.setItem('googleAccessToken', accessToken);
+        localStorage.setItem('googleUser', JSON.stringify(profile));
+        navigate('/select-language');
+      } catch {
+        toast.error(t('login.oauthFailed'));
+      }
+    };
+
+    handleOAuthCallback();
+  }, [navigate]);
+
+  const handleGoogleOAuth = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || window.location.origin + '/';
+
+    if (!clientId) {
+      toast.error(t('login.oauthMissingClientId'));
+      return;
+    }
+
+    const state = createRandomState();
+    localStorage.setItem(OAUTH_STATE_KEY, state);
+    setOauthLoading(true);
+
+    const authUrl = new URL(GOOGLE_OAUTH_ENDPOINT);
+    authUrl.searchParams.set('client_id', clientId);
+    authUrl.searchParams.set('redirect_uri', redirectUri);
+    authUrl.searchParams.set('response_type', 'token');
+    authUrl.searchParams.set('scope', GOOGLE_OAUTH_SCOPES);
+    authUrl.searchParams.set('state', state);
+    authUrl.searchParams.set('include_granted_scopes', 'true');
+    authUrl.searchParams.set('prompt', 'select_account');
+
+    window.location.assign(authUrl.toString());
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,13 +209,16 @@ export function Login() {
         <div className="flex items-center gap-4">
           <button
             type="button"
+            onClick={handleGoogleOAuth}
+            disabled={oauthLoading}
             className="w-14 h-14 flex items-center justify-center shadow-md transition-transform hover:scale-105"
             style={{
-              backgroundColor: '#FEE500',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E6E6FA',
               borderRadius: '24px',
             }}
           >
-            <span style={{ fontSize: '24px' }}>💬</span>
+            <span style={{ fontSize: '20px', fontWeight: 700, color: '#4285F4' }}>G</span>
           </button>
           <button
             type="button"

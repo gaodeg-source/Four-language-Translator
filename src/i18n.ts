@@ -41,6 +41,30 @@ const translations: Record<string, Record<SystemLang, string>> = {
     kr: '또는 다른 방법으로 로그인',
     jp: 'または以下で続ける',
   },
+  'login.oauthMissingClientId': {
+    en: 'Google OAuth is not configured yet',
+    cn: 'Google OAuth 尚未配置',
+    kr: 'Google OAuth가 아직 설정되지 않았습니다',
+    jp: 'Google OAuth が未設定です',
+  },
+  'login.oauthStateMismatch': {
+    en: 'Login verification failed. Please try again.',
+    cn: '登录校验失败，请重试',
+    kr: '로그인 검증에 실패했습니다. 다시 시도해 주세요.',
+    jp: 'ログイン検証に失敗しました。もう一度お試しください。',
+  },
+  'login.oauthDenied': {
+    en: 'Google login was cancelled',
+    cn: '你已取消 Google 登录',
+    kr: 'Google 로그인이 취소되었습니다',
+    jp: 'Google ログインがキャンセルされました',
+  },
+  'login.oauthFailed': {
+    en: 'Google login failed',
+    cn: 'Google 登录失败',
+    kr: 'Google 로그인에 실패했습니다',
+    jp: 'Google ログインに失敗しました',
+  },
 
   // ── Language Names ──
   'lang.cn': {
