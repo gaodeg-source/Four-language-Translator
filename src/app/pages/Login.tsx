@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { t } from '../../i18n';
 import { toast } from 'sonner';
+import { apiUrl } from '../lib/apiBase';
 
 const GOOGLE_OAUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_OAUTH_SCOPES = 'openid profile email';
@@ -68,6 +69,22 @@ export function Login() {
         });
         if (!profileResp.ok) throw new Error('Failed to fetch profile');
         const profile = await profileResp.json();
+
+        try {
+          const syncResp = await fetch(apiUrl('/api/auth/google'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ profile }),
+          });
+          if (syncResp.ok) {
+            const syncData = await syncResp.json();
+            if (syncData?.user?.id) {
+              localStorage.setItem('authUserId', syncData.user.id);
+            }
+          }
+        } catch {
+          // Keep login usable even if DB sync is temporarily unavailable.
+        }
 
         localStorage.setItem('authProvider', 'google');
         localStorage.setItem('googleAccessToken', accessToken);

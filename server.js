@@ -93,12 +93,87 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const { getDb } = require('./db');
 dotenv.config();
 
 console.log('OPENAI_API_KEY loaded:', process.env.OPENAI_API_KEY ? '[OK]' : '[MISSING]');
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+let userIndexEnsured = false;
+
+function sanitizeUser(user) {
+  if (!user) return null;
+  return {
+    id: String(user._id),
+    googleSub: user.googleSub,
+    email: user.email,
+    name: user.name,
+    picture: user.picture,
+    locale: user.locale,
+    emailVerified: user.emailVerified,
+    provider: user.provider,
+    lastLoginAt: user.lastLoginAt,
+    createdAt: user.createdAt,
+  };
+}
+
+// MongoDB health check
+app.get(['/api/db/ping', '/db/ping'], async (_req, res) => {
+  try {
+    const db = await getDb();
+    await db.command({ ping: 1 });
+    res.json({ ok: true, db: db.databaseName });
+  } catch (error) {
+    console.error('DB ping failed:', error);
+    res.status(500).json({ ok: false, error: 'DB ping failed' });
+  }
+});
+
+// Save/update Google user after OAuth callback
+app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
+  const { profile } = req.body || {};
+  if (!profile?.sub) {
+    return res.status(400).json({ error: 'Missing Google profile sub' });
+  }
+
+  try {
+    const db = await getDb();
+    const users = db.collection('users');
+    if (!userIndexEnsured) {
+      await users.createIndex({ googleSub: 1 }, { unique: true });
+      userIndexEnsured = true;
+    }
+
+    const now = new Date();
+    await users.updateOne(
+      { googleSub: profile.sub },
+      {
+        $set: {
+          provider: 'google',
+          googleSub: profile.sub,
+          email: profile.email || '',
+          name: profile.name || '',
+          picture: profile.picture || '',
+          locale: profile.locale || '',
+          emailVerified: Boolean(profile.email_verified),
+          lastLoginAt: now,
+        },
+        $setOnInsert: {
+          createdAt: now,
+        },
+      },
+      { upsert: true }
+    );
+
+    const savedUser = await users.findOne({ googleSub: profile.sub });
+    res.json({ ok: true, user: sanitizeUser(savedUser) });
+  } catch (error) {
+    console.error('Google auth sync failed:', error);
+    res.status(500).json({ ok: false, error: 'Failed to sync user' });
+  }
+});
 
 // Universal translate endpoint
 app.post(['/api/translate', '/translate'], async (req, res) => {
