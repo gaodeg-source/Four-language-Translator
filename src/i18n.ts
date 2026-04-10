@@ -41,6 +41,12 @@ const translations: Record<string, Record<SystemLang, string>> = {
     kr: '또는 다른 방법으로 로그인',
     jp: 'または以下で続ける',
   },
+  'login.googleButton': {
+    en: 'Continue with Google',
+    cn: '使用 Google 登录',
+    kr: 'Google로 계속하기',
+    jp: 'Google で続ける',
+  },
   'login.oauthMissingClientId': {
     en: 'Google OAuth is not configured yet',
     cn: 'Google OAuth 尚未配置',

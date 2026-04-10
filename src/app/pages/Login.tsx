@@ -199,41 +199,31 @@ export function Login() {
             {t('login.button')}
           </Button>
         </div>
-      </form>
 
-      {/* Social Login */}
-      <div className="mt-8">
-        <p className="text-sm text-center mb-4" style={{ color: '#9B8FA6' }}>
-          {t('login.socialHint')}
-        </p>
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={handleGoogleOAuth}
-            disabled={oauthLoading}
-            className="w-14 h-14 flex items-center justify-center shadow-md transition-transform hover:scale-105"
-            style={{
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #E6E6FA',
-              borderRadius: '24px',
-            }}
-          >
-            <span style={{ fontSize: '20px', fontWeight: 700, color: '#4285F4' }}>G</span>
-          </button>
-          <button
-            type="button"
-            className="w-14 h-14 flex items-center justify-center shadow-md transition-transform hover:scale-105"
-            style={{
-              backgroundColor: '#000000',
-              borderRadius: '24px',
-            }}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08l-.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" fill="white"/>
-            </svg>
-          </button>
+        <div className="flex items-center gap-3 py-1">
+          <div className="h-px flex-1" style={{ backgroundColor: '#DCCFEA' }} />
+          <span className="text-xs" style={{ color: '#9B8FA6' }}>{t('login.socialHint')}</span>
+          <div className="h-px flex-1" style={{ backgroundColor: '#DCCFEA' }} />
         </div>
-      </div>
+
+        <Button
+          type="button"
+          onClick={handleGoogleOAuth}
+          disabled={oauthLoading}
+          className="w-full h-14 border-0 shadow-md flex items-center justify-center gap-3"
+          style={{
+            backgroundColor: '#FFFFFF',
+            color: '#6B5B95',
+            borderRadius: '24px',
+            border: '1px solid #E6E6FA',
+            fontSize: '16px',
+            fontWeight: 600,
+          }}
+        >
+          <span style={{ fontSize: '20px', fontWeight: 700, color: '#4285F4' }}>G</span>
+          {t('login.googleButton')}
+        </Button>
+      </form>
     </div>
   );
 }
