@@ -125,15 +125,24 @@ function sanitizeUser(user) {
 
 async function ensureUserIndexes(users) {
   if (userIndexEnsured) return;
-  await users.createIndex({ googleSub: 1 }, { unique: true, sparse: true });
-  await users.createIndex({ emailLower: 1 }, { unique: true, sparse: true });
+  try {
+    await users.createIndex({ googleSub: 1 }, { unique: true, sparse: true });
+    await users.createIndex({ emailLower: 1 }, { unique: true, sparse: true });
+  } catch (error) {
+    // If DB role does not allow index creation, keep auth usable.
+    console.warn('User index ensure skipped:', error?.message || error);
+  }
   userIndexEnsured = true;
 }
 
 async function ensureChatIndexes(chats) {
   if (chatIndexEnsured) return;
-  await chats.createIndex({ userId: 1, chatId: 1 }, { unique: true });
-  await chats.createIndex({ userId: 1, updatedAt: -1 });
+  try {
+    await chats.createIndex({ userId: 1, chatId: 1 }, { unique: true });
+    await chats.createIndex({ userId: 1, updatedAt: -1 });
+  } catch (error) {
+    console.warn('Chat index ensure skipped:', error?.message || error);
+  }
   chatIndexEnsured = true;
 }
 
@@ -168,7 +177,8 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
         $set: {
           provider: 'google',
           googleSub: profile.sub,
-          email: profile.email || '',
+          email: (profile.email || '').toLowerCase(),
+          emailLower: (profile.email || '').toLowerCase(),
           name: profile.name || '',
           picture: profile.picture || '',
           locale: profile.locale || '',
@@ -211,7 +221,12 @@ app.post(['/api/auth/register', '/auth/register'], async (req, res) => {
     const now = new Date();
     const passwordHash = await bcrypt.hash(rawPassword, 12);
     await users.updateOne(
-      { emailLower: normalizedEmail },
+      {
+        $or: [
+          { emailLower: normalizedEmail },
+          { email: normalizedEmail },
+        ],
+      },
       {
         $set: {
           email: normalizedEmail,
@@ -252,7 +267,9 @@ app.post(['/api/auth/login', '/auth/login'], async (req, res) => {
   try {
     const db = await getDb();
     const users = db.collection('users');
-    const user = await users.findOne({ emailLower: normalizedEmail });
+    const user = await users.findOne({
+      $or: [{ emailLower: normalizedEmail }, { email: normalizedEmail }],
+    });
     if (!user?.passwordHash) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -282,7 +299,9 @@ app.post(['/api/auth/forgot-password', '/auth/forgot-password'], async (req, res
   try {
     const db = await getDb();
     const users = db.collection('users');
-    const user = await users.findOne({ emailLower: normalizedEmail });
+    const user = await users.findOne({
+      $or: [{ emailLower: normalizedEmail }, { email: normalizedEmail }],
+    });
 
     // Always return OK to avoid email enumeration.
     if (!user?.passwordHash) {
@@ -327,7 +346,7 @@ app.post(['/api/auth/reset-password', '/auth/reset-password'], async (req, res) 
     const users = db.collection('users');
     const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
     const user = await users.findOne({
-      emailLower: normalizedEmail,
+      $or: [{ emailLower: normalizedEmail }, { email: normalizedEmail }],
       resetTokenHash: tokenHash,
       resetTokenExpiresAt: { $gt: new Date() },
     });

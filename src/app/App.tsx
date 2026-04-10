@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router';
 import { Login } from './pages/Login';
 import { LanguageSelect } from './pages/LanguageSelect';
@@ -19,7 +20,40 @@ import { ForgotPassword } from './pages/ForgotPassword';
 import { Toaster } from './components/ui/sonner';
 import { Navigate } from 'react-router';
 
+function purgeLegacyLocalDataOnce() {
+  const doneKey = 'localPurgeV1Done';
+  if (localStorage.getItem(doneKey) === '1') return;
+
+  const keysToRemove = [
+    'currentChat',
+    'currentChatEN',
+    'currentChatJP',
+    'chatList',
+    'collections',
+    'flashcardText',
+    'selectedDirection',
+    '_pendingVoice',
+  ];
+
+  for (const key of keysToRemove) {
+    localStorage.removeItem(key);
+  }
+
+  const keys = Object.keys(localStorage);
+  for (const key of keys) {
+    if (key.startsWith('chat_')) {
+      localStorage.removeItem(key);
+    }
+  }
+
+  localStorage.setItem(doneKey, '1');
+}
+
 export default function App() {
+  useEffect(() => {
+    purgeLegacyLocalDataOnce();
+  }, []);
+
   return (
     <>
       <BrowserRouter>
