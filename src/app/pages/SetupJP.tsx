@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { ToneSettingsJP } from '../../components/ToneSettingsJP';
 import { t, langLabel } from '../../i18n';
+import { saveChatToCloud } from '../lib/chatHistory';
 
 export function SetupJP() {
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ export function SetupJP() {
     localStorage.setItem('chat_' + chatData.id, JSON.stringify(chatData));
     savedChats.push({ id: chatData.id, name: displayName, lang: 'jp', sourceLang, targetLang });
     localStorage.setItem('chatList', JSON.stringify(savedChats));
+    void saveChatToCloud(chatData);
     navigate(`/chat-jp/${chatData.id}`);
   };
 

@@ -33,6 +33,7 @@ export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [oauthLoading, setOauthLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
@@ -125,7 +126,37 @@ export function Login() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/select-language');
+    const run = async () => {
+      const normalizedEmail = email.trim().toLowerCase();
+      if (!normalizedEmail || !password) {
+        toast.error(t('login.validationRequired'));
+        return;
+      }
+
+      setLoginLoading(true);
+      try {
+        const resp = await fetch(apiUrl('/api/auth/login'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: normalizedEmail, password }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          toast.error(data?.error || t('login.invalidCredentials'));
+          return;
+        }
+
+        localStorage.setItem('authProvider', 'password');
+        localStorage.setItem('authUserId', data.user.id);
+        localStorage.setItem('authUser', JSON.stringify(data.user));
+        navigate('/select-language');
+      } catch {
+        toast.error(t('login.loginFailed'));
+      } finally {
+        setLoginLoading(false);
+      }
+    };
+    run();
   };
 
   return (
@@ -204,6 +235,7 @@ export function Login() {
         <div className="pt-4">
           <Button
             type="submit"
+            disabled={loginLoading}
             className="w-full h-14 border-0 shadow-lg"
             style={{
               backgroundColor: '#B8A9D4',
@@ -226,7 +258,7 @@ export function Login() {
         <Button
           type="button"
           onClick={handleGoogleOAuth}
-          disabled={oauthLoading}
+          disabled={oauthLoading || loginLoading}
           className="w-full h-14 border-0 shadow-md flex items-center justify-center gap-3"
           style={{
             backgroundColor: '#FFFFFF',
@@ -240,6 +272,25 @@ export function Login() {
           <span style={{ fontSize: '20px', fontWeight: 700, color: '#4285F4' }}>G</span>
           {t('login.googleButton')}
         </Button>
+
+        <div className="flex items-center justify-between pt-1">
+          <button
+            type="button"
+            onClick={() => navigate('/forgot-password')}
+            className="text-sm transition-opacity hover:opacity-70"
+            style={{ color: '#6B5B95' }}
+          >
+            {t('login.forgotPassword')}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/register')}
+            className="text-sm transition-opacity hover:opacity-70"
+            style={{ color: '#6B5B95' }}
+          >
+            {t('login.createAccount')}
+          </button>
+        </div>
       </form>
     </div>
   );

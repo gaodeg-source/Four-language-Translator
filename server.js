@@ -92,6 +92,8 @@ Output Rule:
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const { getDb } = require('./db');
 dotenv.config();
@@ -102,6 +104,7 @@ app.use(cors());
 app.use(express.json());
 
 let userIndexEnsured = false;
+let chatIndexEnsured = false;
 
 function sanitizeUser(user) {
   if (!user) return null;
@@ -114,9 +117,24 @@ function sanitizeUser(user) {
     locale: user.locale,
     emailVerified: user.emailVerified,
     provider: user.provider,
+    hasPassword: Boolean(user.passwordHash),
     lastLoginAt: user.lastLoginAt,
     createdAt: user.createdAt,
   };
+}
+
+async function ensureUserIndexes(users) {
+  if (userIndexEnsured) return;
+  await users.createIndex({ googleSub: 1 }, { unique: true, sparse: true });
+  await users.createIndex({ emailLower: 1 }, { unique: true, sparse: true });
+  userIndexEnsured = true;
+}
+
+async function ensureChatIndexes(chats) {
+  if (chatIndexEnsured) return;
+  await chats.createIndex({ userId: 1, chatId: 1 }, { unique: true });
+  await chats.createIndex({ userId: 1, updatedAt: -1 });
+  chatIndexEnsured = true;
 }
 
 // MongoDB health check
@@ -141,10 +159,7 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
   try {
     const db = await getDb();
     const users = db.collection('users');
-    if (!userIndexEnsured) {
-      await users.createIndex({ googleSub: 1 }, { unique: true });
-      userIndexEnsured = true;
-    }
+    await ensureUserIndexes(users);
 
     const now = new Date();
     await users.updateOne(
@@ -172,6 +187,257 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
   } catch (error) {
     console.error('Google auth sync failed:', error);
     res.status(500).json({ ok: false, error: 'Failed to sync user' });
+  }
+});
+
+app.post(['/api/auth/register', '/auth/register'], async (req, res) => {
+  const { email, username, password } = req.body || {};
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const normalizedUsername = String(username || '').trim();
+  const rawPassword = String(password || '');
+
+  if (!normalizedEmail || !normalizedUsername || !rawPassword) {
+    return res.status(400).json({ error: 'Email, username, and password are required' });
+  }
+  if (rawPassword.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  }
+
+  try {
+    const db = await getDb();
+    const users = db.collection('users');
+    await ensureUserIndexes(users);
+
+    const now = new Date();
+    const passwordHash = await bcrypt.hash(rawPassword, 12);
+    await users.updateOne(
+      { emailLower: normalizedEmail },
+      {
+        $set: {
+          email: normalizedEmail,
+          emailLower: normalizedEmail,
+          username: normalizedUsername,
+          passwordHash,
+          provider: 'password',
+          emailVerified: true,
+          lastLoginAt: now,
+        },
+        $setOnInsert: {
+          createdAt: now,
+        },
+      },
+      { upsert: true }
+    );
+
+    const savedUser = await users.findOne({ emailLower: normalizedEmail });
+    res.json({ ok: true, user: sanitizeUser(savedUser) });
+  } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(409).json({ error: 'Email already exists' });
+    }
+    console.error('Register failed:', error);
+    res.status(500).json({ error: 'Register failed' });
+  }
+});
+
+app.post(['/api/auth/login', '/auth/login'], async (req, res) => {
+  const { email, password } = req.body || {};
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const rawPassword = String(password || '');
+
+  if (!normalizedEmail || !rawPassword) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  try {
+    const db = await getDb();
+    const users = db.collection('users');
+    const user = await users.findOne({ emailLower: normalizedEmail });
+    if (!user?.passwordHash) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    const valid = await bcrypt.compare(rawPassword, user.passwordHash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    const now = new Date();
+    await users.updateOne({ _id: user._id }, { $set: { lastLoginAt: now } });
+    const savedUser = await users.findOne({ _id: user._id });
+    res.json({ ok: true, user: sanitizeUser(savedUser) });
+  } catch (error) {
+    console.error('Login failed:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+app.post(['/api/auth/forgot-password', '/auth/forgot-password'], async (req, res) => {
+  const { email } = req.body || {};
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  if (!normalizedEmail) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  try {
+    const db = await getDb();
+    const users = db.collection('users');
+    const user = await users.findOne({ emailLower: normalizedEmail });
+
+    // Always return OK to avoid email enumeration.
+    if (!user?.passwordHash) {
+      return res.json({ ok: true });
+    }
+
+    const token = crypto.randomBytes(24).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await users.updateOne(
+      { _id: user._id },
+      { $set: { resetTokenHash: tokenHash, resetTokenExpiresAt: expiresAt } }
+    );
+
+    const response = { ok: true };
+    if (process.env.NODE_ENV !== 'production') {
+      response.devResetToken = token;
+    }
+    res.json(response);
+  } catch (error) {
+    console.error('Forgot password failed:', error);
+    res.status(500).json({ error: 'Forgot password failed' });
+  }
+});
+
+app.post(['/api/auth/reset-password', '/auth/reset-password'], async (req, res) => {
+  const { email, token, newPassword } = req.body || {};
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const rawToken = String(token || '').trim();
+  const rawPassword = String(newPassword || '');
+
+  if (!normalizedEmail || !rawToken || !rawPassword) {
+    return res.status(400).json({ error: 'Email, token, and new password are required' });
+  }
+  if (rawPassword.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  }
+
+  try {
+    const db = await getDb();
+    const users = db.collection('users');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const user = await users.findOne({
+      emailLower: normalizedEmail,
+      resetTokenHash: tokenHash,
+      resetTokenExpiresAt: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    const passwordHash = await bcrypt.hash(rawPassword, 12);
+    await users.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          passwordHash,
+          provider: user.provider || 'password',
+          lastLoginAt: new Date(),
+        },
+        $unset: {
+          resetTokenHash: '',
+          resetTokenExpiresAt: '',
+        },
+      }
+    );
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Reset password failed:', error);
+    res.status(500).json({ error: 'Reset password failed' });
+  }
+});
+
+app.get(['/api/chat-history', '/chat-history'], async (req, res) => {
+  const userId = String(req.query.userId || '').trim();
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+
+  try {
+    const db = await getDb();
+    const chats = db.collection('chats');
+    await ensureChatIndexes(chats);
+    const rows = await chats
+      .find({ userId })
+      .project({ _id: 0, userId: 0 })
+      .sort({ updatedAt: -1 })
+      .toArray();
+    res.json({ ok: true, chats: rows });
+  } catch (error) {
+    console.error('Load chat history failed:', error);
+    res.status(500).json({ error: 'Load chat history failed' });
+  }
+});
+
+app.get(['/api/chat-history/:chatId', '/chat-history/:chatId'], async (req, res) => {
+  const userId = String(req.query.userId || '').trim();
+  const chatId = String(req.params.chatId || '').trim();
+  if (!userId || !chatId) return res.status(400).json({ error: 'Missing userId or chatId' });
+
+  try {
+    const db = await getDb();
+    const chats = db.collection('chats');
+    const chat = await chats.findOne({ userId, chatId }, { projection: { _id: 0, userId: 0 } });
+    if (!chat) return res.status(404).json({ error: 'Chat not found' });
+    res.json({ ok: true, chat });
+  } catch (error) {
+    console.error('Load chat failed:', error);
+    res.status(500).json({ error: 'Load chat failed' });
+  }
+});
+
+app.post(['/api/chat-history', '/chat-history'], async (req, res) => {
+  const { userId, chat } = req.body || {};
+  const normalizedUserId = String(userId || '').trim();
+  const normalizedChatId = String(chat?.id || '').trim();
+  if (!normalizedUserId || !normalizedChatId) {
+    return res.status(400).json({ error: 'Missing userId or chat.id' });
+  }
+
+  try {
+    const db = await getDb();
+    const chats = db.collection('chats');
+    await ensureChatIndexes(chats);
+
+    const now = new Date();
+    const doc = {
+      userId: normalizedUserId,
+      chatId: normalizedChatId,
+      id: normalizedChatId,
+      name: chat.name || '',
+      lang: chat.lang || '',
+      sourceLang: chat.sourceLang || '',
+      targetLang: chat.targetLang || '',
+      isPolite: typeof chat.isPolite === 'boolean' ? chat.isPolite : undefined,
+      isFormal: typeof chat.isFormal === 'boolean' ? chat.isFormal : undefined,
+      vibes: Array.isArray(chat.vibes) ? chat.vibes : [],
+      personaPrompt: chat.personaPrompt || '',
+      toneMode: chat.toneMode || '',
+      background: chat.background || null,
+      voice: chat.voice || '',
+      messages: Array.isArray(chat.messages) ? chat.messages : [],
+      updatedAt: now,
+    };
+
+    await chats.updateOne(
+      { userId: normalizedUserId, chatId: normalizedChatId },
+      { $set: doc, $setOnInsert: { createdAt: now } },
+      { upsert: true }
+    );
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Save chat history failed:', error);
+    res.status(500).json({ error: 'Save chat history failed' });
   }
 });
 

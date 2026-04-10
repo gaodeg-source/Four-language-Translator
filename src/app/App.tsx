@@ -14,6 +14,8 @@ import { Flashcard } from './pages/Flashcard';
 import { SystemSettings } from './pages/SystemSettings';
 import { Collections } from './pages/Collections';
 import { VoiceSelect } from './pages/VoiceSelect';
+import { Register } from './pages/Register';
+import { ForgotPassword } from './pages/ForgotPassword';
 import { Toaster } from './components/ui/sonner';
 import { Navigate } from 'react-router';
 
@@ -23,6 +25,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/select-language" element={<LanguageSelect />} />
           {/* Chinese → Korean */}
           <Route path="/setup" element={<Setup />} />

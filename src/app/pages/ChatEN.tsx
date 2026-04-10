@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 import { t, langLabel } from '../../i18n';
 import { apiUrl } from '../lib/apiBase';
+import { loadChatByIdFromCloud, loadChatListFromCloud, saveChatToCloud } from '../lib/chatHistory';
 
 interface Message {
   id: string;
@@ -52,7 +53,36 @@ export function ChatEN() {
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadData = () => {
+    const loadData = async () => {
+      const allChats = JSON.parse(localStorage.getItem('chatList') || '[]');
+      setChatList(allChats);
+      const savedCollections = JSON.parse(localStorage.getItem('collections') || '[]');
+      setCollections(savedCollections);
+
+      const cloudList = await loadChatListFromCloud();
+      if (cloudList && cloudList.length > 0) {
+        const slimList = cloudList.map((chat) => ({
+          id: chat.id,
+          name: chat.name,
+          lang: chat.lang,
+          sourceLang: chat.sourceLang,
+          targetLang: chat.targetLang,
+        }));
+        localStorage.setItem('chatList', JSON.stringify(slimList));
+        setChatList(slimList);
+      }
+
+      if (chatId) {
+        const cloudChat = await loadChatByIdFromCloud(chatId);
+        if (cloudChat) {
+          setChatData(cloudChat);
+          setMessages(cloudChat.messages || []);
+          localStorage.setItem('currentChatEN', JSON.stringify(cloudChat));
+          localStorage.setItem('chat_' + chatId, JSON.stringify(cloudChat));
+          return;
+        }
+      }
+
       const byId = chatId ? localStorage.getItem('chat_' + chatId) : null;
       const stored = byId || localStorage.getItem('currentChatEN');
       if (stored) {
@@ -63,15 +93,12 @@ export function ChatEN() {
       } else {
         navigate('/setup-en');
       }
-      const allChats = JSON.parse(localStorage.getItem('chatList') || '[]');
-      setChatList(allChats);
-      const savedCollections = JSON.parse(localStorage.getItem('collections') || '[]');
-      setCollections(savedCollections);
     };
-    loadData();
+    void loadData();
     // Re-read when navigating back (e.g. from Settings)
-    window.addEventListener('popstate', loadData);
-    return () => window.removeEventListener('popstate', loadData);
+    const onPopState = () => { void loadData(); };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
   }, [chatId, navigate]);
 
   useEffect(() => {
@@ -132,6 +159,7 @@ export function ChatEN() {
       setInputText('');
       localStorage.setItem('currentChatEN', JSON.stringify(updatedChat));
       localStorage.setItem('chat_' + updatedChat.id, JSON.stringify(updatedChat));
+      void saveChatToCloud(updatedChat);
     } catch (error) {
       console.error('Translation failed:', error);
       toast.error(t('chat.translationFailed'));

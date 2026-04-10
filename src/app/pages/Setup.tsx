@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { ToneSettingsUI } from '../../components/ToneSettingsUI';
 import { t, langLabel } from '../../i18n';
+import { saveChatToCloud } from '../lib/chatHistory';
 
 export function Setup() {
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ export function Setup() {
     localStorage.setItem('chat_' + chatData.id, JSON.stringify(chatData));
     savedChats.push({ id: chatData.id, name: displayName, lang: 'kr', sourceLang, targetLang });
     localStorage.setItem('chatList', JSON.stringify(savedChats));
+    void saveChatToCloud(chatData);
     navigate(`/chat/${chatData.id}`);
   };
 
