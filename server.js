@@ -290,6 +290,8 @@ app.post(['/api/auth/login', '/auth/login'], async (req, res) => {
 });
 
 app.post(['/api/auth/forgot-password', '/auth/forgot-password'], async (req, res) => {
+  return res.status(503).json({ error: 'Forgot password is temporarily disabled' });
+
   const { email } = req.body || {};
   const normalizedEmail = String(email || '').trim().toLowerCase();
   if (!normalizedEmail) {
@@ -329,6 +331,8 @@ app.post(['/api/auth/forgot-password', '/auth/forgot-password'], async (req, res
 });
 
 app.post(['/api/auth/reset-password', '/auth/reset-password'], async (req, res) => {
+  return res.status(503).json({ error: 'Password reset is temporarily disabled' });
+
   const { email, token, newPassword } = req.body || {};
   const normalizedEmail = String(email || '').trim().toLowerCase();
   const rawToken = String(token || '').trim();

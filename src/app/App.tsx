@@ -60,7 +60,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-password" element={<Navigate to="/" replace />} />
           <Route path="/select-language" element={<LanguageSelect />} />
           {/* Chinese → Korean */}
           <Route path="/setup" element={<Setup />} />

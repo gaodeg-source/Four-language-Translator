@@ -302,15 +302,7 @@ export function Login() {
           {t('login.googleButton')}
         </Button>
 
-        <div className="flex items-center justify-between pt-1">
-          <button
-            type="button"
-            onClick={() => navigate('/forgot-password')}
-            className="text-sm transition-opacity hover:opacity-70"
-            style={{ color: '#6B5B95' }}
-          >
-            {t('login.forgotPassword')}
-          </button>
+        <div className="flex items-center justify-end pt-1">
           <button
             type="button"
             onClick={() => navigate('/register')}
