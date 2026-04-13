@@ -543,6 +543,12 @@ const translations: Record<string, Record<SystemLang, string>> = {
     kr: '채팅 이름',
     jp: 'チャット名',
   },
+  'settings.unsavedConfirm': {
+    en: 'You have unsaved changes. Press OK to save before leaving, or Cancel to stay on this page.',
+    cn: '你有未保存的更改。点击“确定”可先保存后返回，点击“取消”则留在当前页面。',
+    kr: '저장되지 않은 변경사항이 있습니다. 나가기 전에 저장하려면 확인을 누르고, 이 페이지에 머물려면 취소를 누르세요.',
+    jp: '未保存の変更があります。保存して戻る場合は「OK」、このページに残る場合は「キャンセル」を押してください。',
+  },
   'setup.required': {
     en: '* Required',
     cn: '* 必填',

@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { ToneSettingsJP } from '../../components/ToneSettingsJP';
 import { t, getSystemLang } from '../../i18n';
 import { getVoiceLabel } from './VoiceSelect';
+import { saveChatToCloud } from '../lib/chatHistory';
 
 interface ChatData {
   id: string;
@@ -32,6 +33,15 @@ export function SettingsJP() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [voice, setVoice] = useState('');
 
+  const hasUnsavedChanges = Boolean(chatData) && (
+    (chatName.trim() || chatData?.name || '') !== (chatData?.name || '') ||
+    backgroundImage !== (chatData?.background ?? null) ||
+    isPolite !== (chatData?.isPolite ?? true) ||
+    JSON.stringify(vibes) !== JSON.stringify(chatData?.vibes ?? []) ||
+    personaPrompt !== (chatData?.personaPrompt || '') ||
+    voice !== (chatData?.voice || '')
+  );
+
   useEffect(() => {
     const byId = chatId ? localStorage.getItem('chat_' + chatId) : null;
     const stored = byId || localStorage.getItem('currentChatJP');
@@ -53,7 +63,7 @@ export function SettingsJP() {
     }
   }, [chatId]);
 
-  const handleSave = () => {
+  const handleSave = async (goBack = true) => {
     if (chatData) {
       const updatedChat = {
         ...chatData,
@@ -70,8 +80,32 @@ export function SettingsJP() {
       const allChats = JSON.parse(localStorage.getItem('chatList') || '[]');
       const idx = allChats.findIndex((c: any) => c.id === updatedChat.id);
       if (idx !== -1) { allChats[idx].name = updatedChat.name; localStorage.setItem('chatList', JSON.stringify(allChats)); }
-      navigate(-1);
+      void saveChatToCloud(updatedChat);
+      if (goBack) navigate(-1);
     }
+  };
+
+  const applyBackgroundImmediately = (nextBackground: string | null) => {
+    if (!chatData) return;
+    const updatedChat = {
+      ...chatData,
+      background: nextBackground,
+    };
+    setBackgroundImage(nextBackground);
+    setChatData(updatedChat);
+    localStorage.setItem('currentChatJP', JSON.stringify(updatedChat));
+    localStorage.setItem('chat_' + updatedChat.id, JSON.stringify(updatedChat));
+    void saveChatToCloud(updatedChat);
+  };
+
+  const handleBack = async () => {
+    if (!hasUnsavedChanges) {
+      navigate(-1);
+      return;
+    }
+    const shouldSave = window.confirm(t('settings.unsavedConfirm'));
+    if (!shouldSave) return;
+    await handleSave(true);
   };
 
   if (!chatData) return null;
@@ -79,7 +113,7 @@ export function SettingsJP() {
   return (
     <div className="min-h-screen px-6 md:px-12 lg:px-24 py-8" style={{ backgroundColor: '#FFFBF5' }}>
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => { void handleBack(); }}
         className="fixed top-6 left-6 z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
       >
         <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
@@ -137,7 +171,7 @@ export function SettingsJP() {
               const file = e.target.files?.[0];
               if (file) {
                 const reader = new FileReader();
-                reader.onloadend = () => setBackgroundImage(reader.result as string);
+                reader.onloadend = () => applyBackgroundImmediately(reader.result as string);
                 reader.readAsDataURL(file);
               }
             }} />
@@ -164,7 +198,20 @@ export function SettingsJP() {
           </button>
         </div>
         <div className="pt-4">
-          <Button onClick={handleSave} className="w-full h-14 border-0 shadow-lg" style={{ backgroundColor: '#B8A9D4', color: '#FFFFFF', borderRadius: '24px', fontSize: '16px', fontWeight: 600 }}>
+          <Button
+            onClick={() => { void handleSave(true); }}
+            disabled={!hasUnsavedChanges}
+            className="w-full h-14 border-0 shadow-lg"
+            style={{
+              backgroundColor: hasUnsavedChanges ? '#B8A9D4' : '#D8D0E3',
+              color: '#FFFFFF',
+              borderRadius: '24px',
+              fontSize: '16px',
+              fontWeight: 600,
+              opacity: hasUnsavedChanges ? 1 : 0.7,
+              cursor: hasUnsavedChanges ? 'pointer' : 'not-allowed',
+            }}
+          >
             {t('settings.save')}
           </Button>
         </div>
