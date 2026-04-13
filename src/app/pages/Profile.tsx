@@ -10,7 +10,6 @@ import { apiUrl } from '../lib/apiBase';
 export function Profile() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
-  const [provider, setProvider] = useState('');
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [resolvedUserId, setResolvedUserId] = useState('');
@@ -60,7 +59,6 @@ export function Profile() {
         const data = await resp.json();
         if (!resp.ok) throw new Error(data?.error || 'Load profile failed');
         setEmail(data.user.email || '');
-        setProvider(data.user.provider || '');
         setUsername(data.user.username || data.user.name || '');
         localStorage.setItem('authUser', JSON.stringify(data.user));
       } catch {
@@ -129,17 +127,6 @@ export function Profile() {
             <Input
               type="text"
               value={email}
-              disabled
-              className="h-12 px-5 border-0 shadow-md"
-              style={{ backgroundColor: '#FFFFFF', borderRadius: '24px', fontSize: '16px', color: '#9B8FA6' }}
-            />
-          </div>
-
-          <div>
-            <p className="mb-2" style={{ fontSize: '14px', fontWeight: 600, color: '#6B5B95' }}>{t('profile.provider')}</p>
-            <Input
-              type="text"
-              value={provider || 'password'}
               disabled
               className="h-12 px-5 border-0 shadow-md"
               style={{ backgroundColor: '#FFFFFF', borderRadius: '24px', fontSize: '16px', color: '#9B8FA6' }}
