@@ -96,12 +96,14 @@ export function Login() {
           });
           if (syncResp.ok) {
             const syncData = await syncResp.json();
-            if (syncData?.user?.id) {
-              localStorage.setItem('authUserId', syncData.user.id);
-            }
+            if (syncData?.user?.id) localStorage.setItem('authUserId', syncData.user.id);
+            localStorage.setItem('authUser', JSON.stringify(syncData?.user || {}));
+          } else if (profile?.sub) {
+            // Fallback for legacy Google sessions: keep a stable id key for profile lookup.
+            localStorage.setItem('authUserId', profile.sub);
           }
         } catch {
-          // Keep login usable even if DB sync is temporarily unavailable.
+          if (profile?.sub) localStorage.setItem('authUserId', profile.sub);
         }
 
         localStorage.setItem('authProvider', 'google');

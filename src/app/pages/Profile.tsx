@@ -13,14 +13,47 @@ export function Profile() {
   const [provider, setProvider] = useState('');
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resolvedUserId, setResolvedUserId] = useState('');
 
   useEffect(() => {
+    const hydrateGoogleSessionIfNeeded = async (): Promise<string> => {
+      const existingUserId = localStorage.getItem('authUserId') || '';
+      if (existingUserId) return existingUserId;
+
+      const rawGoogleUser = localStorage.getItem('googleUser');
+      if (!rawGoogleUser) return '';
+
+      try {
+        const profile = JSON.parse(rawGoogleUser);
+        if (!profile?.sub) return '';
+        localStorage.setItem('authUserId', profile.sub);
+
+        const syncResp = await fetch(apiUrl('/api/auth/google'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile }),
+        });
+        if (syncResp.ok) {
+          const syncData = await syncResp.json();
+          if (syncData?.user?.id) {
+            localStorage.setItem('authUserId', syncData.user.id);
+            localStorage.setItem('authUser', JSON.stringify(syncData.user));
+            return syncData.user.id;
+          }
+        }
+        return profile.sub;
+      } catch {
+        return '';
+      }
+    };
+
     const loadProfile = async () => {
-      const userId = localStorage.getItem('authUserId') || '';
+      const userId = await hydrateGoogleSessionIfNeeded();
       if (!userId) {
         navigate('/');
         return;
       }
+      setResolvedUserId(userId);
 
       try {
         const resp = await fetch(apiUrl(`/api/auth/profile?userId=${encodeURIComponent(userId)}`));
@@ -38,7 +71,7 @@ export function Profile() {
   }, [navigate]);
 
   const handleSave = async () => {
-    const userId = localStorage.getItem('authUserId') || '';
+    const userId = resolvedUserId || localStorage.getItem('authUserId') || '';
     const nextUsername = username.trim();
     if (!userId || !nextUsername) {
       toast.error(t('profile.validationRequired'));

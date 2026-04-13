@@ -207,7 +207,12 @@ function queryUserById(userId) {
   if (ObjectId.isValid(userId)) {
     return { _id: new ObjectId(userId) };
   }
-  return { _id: userId };
+  return {
+    $or: [
+      { _id: userId },
+      { googleSub: userId },
+    ],
+  };
 }
 
 app.get(['/api/auth/profile', '/auth/profile'], async (req, res) => {
