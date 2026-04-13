@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, Check, LogOut } from 'lucide-react';
+import { ArrowLeft, Check } from 'lucide-react';
 import { t, getSystemLang, setSystemLang, type SystemLang } from '../../i18n';
 
 const SYSTEM_LANGUAGES: { code: SystemLang; label: string; flag: string }[] = [
@@ -17,11 +17,6 @@ export function SystemSettings() {
   const handleSelect = (lang: SystemLang) => {
     setSystemLang(lang);
     setCurrentLang(lang);
-  };
-
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/');
   };
 
   return (
@@ -77,23 +72,6 @@ export function SystemSettings() {
           </div>
         </div>
 
-        {/* Log Out */}
-        <div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-3 px-5 py-4 shadow-md transition-all hover:shadow-lg"
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '20px',
-              border: '2px solid #E6E6FA',
-            }}
-          >
-            <LogOut className="w-5 h-5" style={{ color: '#E74C3C' }} />
-            <span style={{ fontSize: '16px', fontWeight: 600, color: '#E74C3C' }}>
-              {t('sysSettings.logOut')}
-            </span>
-          </button>
-        </div>
       </div>
       </div>
     </div>

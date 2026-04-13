@@ -16,7 +16,7 @@ import { SystemSettings } from './pages/SystemSettings';
 import { Collections } from './pages/Collections';
 import { VoiceSelect } from './pages/VoiceSelect';
 import { Register } from './pages/Register';
-import { ForgotPassword } from './pages/ForgotPassword';
+import { Profile } from './pages/Profile';
 import { Toaster } from './components/ui/sonner';
 import { Navigate } from 'react-router';
 
@@ -61,6 +61,7 @@ export default function App() {
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<Navigate to="/" replace />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/select-language" element={<LanguageSelect />} />
           {/* Chinese → Korean */}
           <Route path="/setup" element={<Setup />} />

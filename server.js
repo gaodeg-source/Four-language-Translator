@@ -94,6 +94,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const { ObjectId } = require('mongodb');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const { getDb } = require('./db');
 dotenv.config();
@@ -112,6 +113,7 @@ function sanitizeUser(user) {
     id: String(user._id),
     googleSub: user.googleSub,
     email: user.email,
+    username: user.username || '',
     name: user.name,
     picture: user.picture,
     locale: user.locale,
@@ -179,6 +181,7 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
           googleSub: profile.sub,
           email: (profile.email || '').toLowerCase(),
           emailLower: (profile.email || '').toLowerCase(),
+          username: profile.name || '',
           name: profile.name || '',
           picture: profile.picture || '',
           locale: profile.locale || '',
@@ -197,6 +200,59 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
   } catch (error) {
     console.error('Google auth sync failed:', error);
     res.status(500).json({ ok: false, error: 'Failed to sync user' });
+  }
+});
+
+function queryUserById(userId) {
+  if (ObjectId.isValid(userId)) {
+    return { _id: new ObjectId(userId) };
+  }
+  return { _id: userId };
+}
+
+app.get(['/api/auth/profile', '/auth/profile'], async (req, res) => {
+  const userId = String(req.query.userId || '').trim();
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+
+  try {
+    const db = await getDb();
+    const users = db.collection('users');
+    const user = await users.findOne(queryUserById(userId));
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ ok: true, user: sanitizeUser(user) });
+  } catch (error) {
+    console.error('Load profile failed:', error);
+    res.status(500).json({ error: 'Load profile failed' });
+  }
+});
+
+app.post(['/api/auth/profile', '/auth/profile'], async (req, res) => {
+  const userId = String(req.body?.userId || '').trim();
+  const username = String(req.body?.username || '').trim();
+  if (!userId || !username) {
+    return res.status(400).json({ error: 'Missing userId or username' });
+  }
+  if (username.length < 2 || username.length > 40) {
+    return res.status(400).json({ error: 'Username must be 2-40 characters' });
+  }
+
+  try {
+    const db = await getDb();
+    const users = db.collection('users');
+    const query = queryUserById(userId);
+    const existing = await users.findOne(query);
+    if (!existing) return res.status(404).json({ error: 'User not found' });
+
+    const setFields = { username };
+    if (existing.provider === 'google') {
+      setFields.name = username;
+    }
+    await users.updateOne(query, { $set: setFields });
+    const updated = await users.findOne(query);
+    res.json({ ok: true, user: sanitizeUser(updated) });
+  } catch (error) {
+    console.error('Update profile failed:', error);
+    res.status(500).json({ error: 'Update profile failed' });
   }
 });
 

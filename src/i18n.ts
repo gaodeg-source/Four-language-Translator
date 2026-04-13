@@ -227,6 +227,78 @@ const translations: Record<string, Record<SystemLang, string>> = {
     kr: '비밀번호 재설정에 실패했습니다',
     jp: 'パスワードのリセットに失敗しました',
   },
+  'profile.title': {
+    en: 'Profile',
+    cn: '个人资料',
+    kr: '프로필',
+    jp: 'プロフィール',
+  },
+  'profile.subtitle': {
+    en: 'Manage your account information',
+    cn: '管理你的账号信息',
+    kr: '계정 정보를 관리하세요',
+    jp: 'アカウント情報を管理',
+  },
+  'profile.back': {
+    en: 'Back',
+    cn: '返回',
+    kr: '뒤로',
+    jp: '戻る',
+  },
+  'profile.email': {
+    en: 'Email',
+    cn: '邮箱',
+    kr: '이메일',
+    jp: 'メール',
+  },
+  'profile.provider': {
+    en: 'Sign-in Method',
+    cn: '登录方式',
+    kr: '로그인 방식',
+    jp: 'ログイン方法',
+  },
+  'profile.username': {
+    en: 'Username',
+    cn: '用户名',
+    kr: '사용자 이름',
+    jp: 'ユーザー名',
+  },
+  'profile.save': {
+    en: 'Save Profile',
+    cn: '保存资料',
+    kr: '프로필 저장',
+    jp: 'プロフィールを保存',
+  },
+  'profile.logOut': {
+    en: 'Log Out',
+    cn: '退出登录',
+    kr: '로그아웃',
+    jp: 'ログアウト',
+  },
+  'profile.validationRequired': {
+    en: 'Username is required',
+    cn: '请输入用户名',
+    kr: '사용자 이름을 입력해 주세요',
+    jp: 'ユーザー名を入力してください',
+  },
+  'profile.updateSuccess': {
+    en: 'Profile updated',
+    cn: '资料已更新',
+    kr: '프로필이 업데이트되었습니다',
+    jp: 'プロフィールを更新しました',
+  },
+  'profile.updateFailed': {
+    en: 'Failed to update profile',
+    cn: '更新资料失败',
+    kr: '프로필 업데이트에 실패했습니다',
+    jp: 'プロフィールの更新に失敗しました',
+  },
+  'profile.loadFailed': {
+    en: 'Failed to load profile',
+    cn: '加载资料失败',
+    kr: '프로필 로드에 실패했습니다',
+    jp: 'プロフィールの読み込みに失敗しました',
+  },
 
   // ── Language Names ──
   'lang.cn': {

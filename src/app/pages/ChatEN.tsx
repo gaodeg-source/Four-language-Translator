@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { Settings, Send, Copy, Maximize2, Menu, Plus, X, Star, Volume2 } from 'lucide-react';
+import { Settings, Send, Copy, Maximize2, Menu, Plus, X, Star, Volume2, User } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
@@ -278,6 +278,9 @@ export function ChatEN() {
               <Star className="w-4 h-4 inline mr-2" /> {t('chat.collection')}
             </button>
             <div style={{ borderTop: '1px solid #E6E6FA', margin: '4px 0' }} />
+            <button onClick={() => { setSidebarOpen(false); navigate('/profile'); }} className="w-full text-center py-2 transition-opacity hover:opacity-70" style={{ fontSize: '14px', color: '#6B5B95' }}>
+              <User className="w-4 h-4 inline mr-2" /> {t('profile.title')}
+            </button>
             <button onClick={() => { setSidebarOpen(false); navigate('/system-settings'); }} className="w-full text-center py-2 transition-opacity hover:opacity-70" style={{ fontSize: '14px', color: '#6B5B95' }}>
               <Settings className="w-4 h-4 inline mr-2" /> {t('chat.systemSettings')}
             </button>
