@@ -65,12 +65,13 @@ export function LanguageSelect() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-6 relative"
-      style={{ background: 'linear-gradient(135deg, #E6E6FA 0%, #FFFBF5 100%)' }}
+      className="min-h-full flex flex-col items-center justify-center px-6 relative"
+      style={{ background: 'linear-gradient(135deg, #E6E6FA 0%, #FFFBF5 100%)', paddingTop: '59px', paddingBottom: '34px' }}
     >
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-6 left-6 z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
+        className="absolute left-6 z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
+        style={{ top: '68px' }}
       >
         <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
         <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('settings.back')}</span>
@@ -176,7 +177,7 @@ export function LanguageSelect() {
 
       {/* Close dropdowns when clicking outside */}
       {(sourceOpen || targetOpen) && (
-        <div className="fixed inset-0 z-40" onClick={() => { setSourceOpen(false); setTargetOpen(false); }} />
+        <div className="absolute inset-0 z-40" onClick={() => { setSourceOpen(false); setTargetOpen(false); }} />
       )}
     </div>
   );

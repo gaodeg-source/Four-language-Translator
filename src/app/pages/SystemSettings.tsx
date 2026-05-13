@@ -20,11 +20,11 @@ export function SystemSettings() {
   };
 
   return (
-    <div className="min-h-screen px-6 md:px-12 lg:px-24 py-8" style={{ backgroundColor: '#FFFBF5' }}>
+    <div className="min-h-full px-6" style={{ backgroundColor: '#FFFBF5', paddingTop: '72px', paddingBottom: '42px', position: 'relative' }}>
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-6 left-6 z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
+        className="absolute left-6 z-50 flex items-center gap-2 transition-opacity hover:opacity-70" style={{ top: '76px' }}
       >
         <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
         <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('sysSettings.back')}</span>

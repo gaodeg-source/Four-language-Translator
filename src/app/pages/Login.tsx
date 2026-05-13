@@ -190,16 +190,18 @@ export function Login() {
 
   return (
     <div 
-      className="min-h-screen flex flex-col items-center justify-center px-6 relative"
+      className="min-h-full flex flex-col items-center justify-center px-6 relative"
       style={{
         background: 'linear-gradient(135deg, #E6E6FA 0%, #FFFBF5 100%)',
+        paddingTop: '59px',
+        paddingBottom: '34px',
       }}
     >
       {/* Interface Language Button */}
       <button
         onClick={() => navigate('/system-settings')}
-        className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2.5 shadow-md transition-transform hover:scale-105"
-        style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '2px solid #E6E6FA' }}
+        className="absolute right-6 flex items-center gap-2 px-4 py-2.5 shadow-md transition-transform hover:scale-105"
+        style={{ top: '68px', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '2px solid #E6E6FA' }}
         aria-label={t('sysSettings.langTitle')}
       >
         <Languages className="w-5 h-5 shrink-0" style={{ color: '#6B5B95' }} />
