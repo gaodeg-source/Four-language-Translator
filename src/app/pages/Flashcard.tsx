@@ -85,11 +85,11 @@ export function Flashcard() {
   return (
     <div 
       ref={cardRef}
-      className="h-full flex flex-col items-center justify-center p-8 relative"
-      style={{ backgroundColor: '#FFFFFF', paddingTop: '68px', paddingBottom: '34px' }}
+      className="h-screen flex flex-col items-center justify-center p-8 relative"
+      style={{ backgroundColor: '#FFFFFF' }}
     >
       {/* Top Actions */}
-      <div className="absolute right-6 flex items-center gap-3" style={{ top: '68px' }}>
+      <div className="absolute top-6 right-6 flex items-center gap-3">
         <button
           onClick={handleSaveToAlbum}
           className="w-12 h-12 flex items-center justify-center shadow-lg transition-transform hover:scale-105"

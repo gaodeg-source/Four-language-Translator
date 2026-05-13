@@ -46,10 +46,10 @@ export function SetupJP() {
   };
 
   return (
-    <div className="min-h-full px-6" style={{ backgroundColor: '#FFFBF5', paddingTop: '72px', paddingBottom: '42px', position: 'relative' }}>
+    <div className="min-h-screen px-6 md:px-12 lg:px-24 py-8" style={{ backgroundColor: '#FFFBF5' }}>
       <button
         onClick={() => navigate(-1)}
-        className="absolute left-6 z-50 flex items-center gap-2 transition-opacity hover:opacity-70" style={{ top: '76px' }}
+        className="fixed top-6 left-6 z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
       >
         <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
         <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('settings.back')}</span>

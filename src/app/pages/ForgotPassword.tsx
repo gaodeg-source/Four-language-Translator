@@ -85,13 +85,12 @@ export function ForgotPassword() {
 
   return (
     <div
-      className="min-h-full flex flex-col items-center justify-center px-6 relative"
-      style={{ background: 'linear-gradient(135deg, #E6E6FA 0%, #FFFBF5 100%)', paddingTop: '59px', paddingBottom: '34px' }}
+      className="min-h-screen flex flex-col items-center justify-center px-6 relative"
+      style={{ background: 'linear-gradient(135deg, #E6E6FA 0%, #FFFBF5 100%)' }}
     >
       <button
         onClick={() => navigate('/')}
-        className="absolute left-6 p-2 transition-opacity hover:opacity-70"
-        style={{ top: '68px' }}
+        className="absolute top-6 left-6 p-2 transition-opacity hover:opacity-70"
       >
         <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
       </button>
