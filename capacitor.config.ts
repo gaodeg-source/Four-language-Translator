@@ -5,8 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Language Translator',
   webDir: 'dist',
   server: {
-    url: 'https://four-language-translator.vercel.app',
-    cleartext: false,
+    androidScheme: 'https',
   },
   ios: {
     contentInset: 'always',
