@@ -55,19 +55,24 @@ export function ChatEN() {
 
   useEffect(() => {
     const loadData = async () => {
-      const allChats = JSON.parse(localStorage.getItem('chatList') || '[]');
-      setChatList(allChats);
-      const savedCollections = JSON.parse(localStorage.getItem('collections') || '[]');
-      setCollections(savedCollections);
+      setChatList(JSON.parse(localStorage.getItem('chatList') || '[]'));
+      setCollections(JSON.parse(localStorage.getItem('collections') || '[]'));
+
+      const localStored = (chatId ? localStorage.getItem('chat_' + chatId) : null) || localStorage.getItem('currentChatEN');
+      const localData = localStored ? JSON.parse(localStored) : null;
+      if (localData) {
+        setChatData(localData);
+        setMessages(localData.messages || []);
+      } else if (!chatId) {
+        navigate('/setup-en');
+        return;
+      }
 
       const cloudList = await loadChatListFromCloud();
       if (cloudList && cloudList.length > 0) {
         const slimList = cloudList.map((chat) => ({
-          id: chat.id,
-          name: chat.name,
-          lang: chat.lang,
-          sourceLang: chat.sourceLang,
-          targetLang: chat.targetLang,
+          id: chat.id, name: chat.name, lang: chat.lang,
+          sourceLang: chat.sourceLang, targetLang: chat.targetLang,
         }));
         localStorage.setItem('chatList', JSON.stringify(slimList));
         setChatList(slimList);
@@ -76,30 +81,26 @@ export function ChatEN() {
       if (chatId) {
         const cloudChat = await loadChatByIdFromCloud(chatId);
         if (cloudChat) {
-          setChatData(cloudChat);
-          setMessages(cloudChat.messages || []);
-          localStorage.setItem('currentChatEN', JSON.stringify(cloudChat));
-          localStorage.setItem('chat_' + chatId, JSON.stringify(cloudChat));
-          return;
+          const base = localData ?? cloudChat;
+          const merged = {
+            ...cloudChat,
+            background: base.background ?? cloudChat.background,
+            isFormal: base.isFormal ?? cloudChat.isFormal,
+            vibes: base.vibes ?? cloudChat.vibes,
+            personaPrompt: base.personaPrompt ?? cloudChat.personaPrompt,
+            voice: base.voice ?? cloudChat.voice,
+            name: base.name ?? cloudChat.name,
+          };
+          setChatData(merged);
+          setMessages(merged.messages || []);
+          localStorage.setItem('currentChatEN', JSON.stringify(merged));
+          localStorage.setItem('chat_' + chatId, JSON.stringify(merged));
+        } else if (!localData) {
+          navigate('/setup-en');
         }
-      }
-
-      const byId = chatId ? localStorage.getItem('chat_' + chatId) : null;
-      const stored = byId || localStorage.getItem('currentChatEN');
-      if (stored) {
-        const data = JSON.parse(stored);
-        setChatData(data);
-        setMessages(data.messages || []);
-        localStorage.setItem('currentChatEN', stored);
-      } else {
-        navigate('/setup-en');
       }
     };
     void loadData();
-    // Re-read when navigating back (e.g. from Settings)
-    const onPopState = () => { void loadData(); };
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
   }, [chatId, navigate, location.key]);
 
   useEffect(() => {

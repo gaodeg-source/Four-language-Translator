@@ -83,7 +83,7 @@ export function SettingsEN() {
       const idx = allChats.findIndex((c: any) => c.id === updatedChat.id);
       if (idx !== -1) { allChats[idx].name = updatedChat.name; localStorage.setItem('chatList', JSON.stringify(allChats)); }
       void saveChatToCloud(updatedChat);
-      if (goBack) navigate(-1);
+      if (goBack) navigate(`/chat-en/${updatedChat.id}`, { replace: true });
     }
   };
 
