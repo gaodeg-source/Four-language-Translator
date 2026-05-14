@@ -519,6 +519,12 @@ const translations: Record<string, Record<SystemLang, string>> = {
     kr: '탭하여 업로드',
     jp: 'タップしてアップロード',
   },
+  'settings.removeBackground': {
+    en: 'Remove background',
+    cn: '移除背景',
+    kr: '배경 제거',
+    jp: '背景を削除',
+  },
   'settings.save': {
     en: 'Save Changes',
     cn: '保存更改',
