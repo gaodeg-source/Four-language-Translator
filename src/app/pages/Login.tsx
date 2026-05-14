@@ -7,6 +7,9 @@ import { t } from '../../i18n';
 import { toast } from 'sonner';
 import { apiUrl } from '../lib/apiBase';
 import { getMostRecentChatPath } from '../lib/chatHistory';
+import { Capacitor } from '@capacitor/core';
+
+const isNative = Capacitor.isNativePlatform();
 
 const GOOGLE_OAUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_OAUTH_SCOPES = 'openid profile email';
@@ -275,31 +278,35 @@ export function Login() {
           </Button>
         </div>
 
-        <div className="flex items-center gap-3 py-1">
-          <div className="h-px flex-1" style={{ backgroundColor: '#DCCFEA' }} />
-          <span className="text-xs" style={{ color: '#9B8FA6' }}>{t('login.socialHint')}</span>
-          <div className="h-px flex-1" style={{ backgroundColor: '#DCCFEA' }} />
-        </div>
+        {!isNative && (
+          <>
+            <div className="flex items-center gap-3 py-1">
+              <div className="h-px flex-1" style={{ backgroundColor: '#DCCFEA' }} />
+              <span className="text-xs" style={{ color: '#9B8FA6' }}>{t('login.socialHint')}</span>
+              <div className="h-px flex-1" style={{ backgroundColor: '#DCCFEA' }} />
+            </div>
 
-        <Button
-          type="button"
-          onClick={handleGoogleOAuth}
-          disabled={oauthLoading || loginLoading}
-          className="w-full border-0 flex items-center justify-center gap-2"
-          style={{
-            backgroundColor: '#FFFFFF',
-            color: '#3C4043',
-            borderRadius: '4px',
-            border: '1px solid #DADCE0',
-            height: '40px',
-            fontSize: '14px',
-            fontWeight: 500,
-            boxShadow: 'none',
-          }}
-        >
-          <GoogleLogo />
-          {t('login.googleButton')}
-        </Button>
+            <Button
+              type="button"
+              onClick={handleGoogleOAuth}
+              disabled={oauthLoading || loginLoading}
+              className="w-full border-0 flex items-center justify-center gap-2"
+              style={{
+                backgroundColor: '#FFFFFF',
+                color: '#3C4043',
+                borderRadius: '4px',
+                border: '1px solid #DADCE0',
+                height: '40px',
+                fontSize: '14px',
+                fontWeight: 500,
+                boxShadow: 'none',
+              }}
+            >
+              <GoogleLogo />
+              {t('login.googleButton')}
+            </Button>
+          </>
+        )}
 
         <div className="flex items-center justify-end pt-1">
           <button

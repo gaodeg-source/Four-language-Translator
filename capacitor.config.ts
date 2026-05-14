@@ -7,11 +7,6 @@ const config: CapacitorConfig = {
   server: {
     url: 'https://four-language-translator.vercel.app',
     cleartext: false,
-    allowNavigation: [
-      '*.google.com',
-      'accounts.google.com',
-      'four-language-translator.vercel.app',
-    ],
   },
   ios: {
     contentInset: 'always',
