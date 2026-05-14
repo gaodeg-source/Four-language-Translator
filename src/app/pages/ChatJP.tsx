@@ -233,7 +233,7 @@ export function ChatJP() {
     : { backgroundColor: '#FFFFFF' };
 
   return (
-    <div className="h-screen flex flex-col relative overflow-hidden">
+    <div className="h-full flex flex-col relative overflow-hidden">
       {/* Sidebar */}
       <div
         className="absolute top-0 left-0 h-full z-50 transition-transform duration-300 shadow-2xl"
@@ -286,7 +286,7 @@ export function ChatJP() {
       {sidebarOpen && <div className="absolute inset-0 bg-black/20 z-40" onClick={() => setSidebarOpen(false)} />}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 shadow-sm z-30" style={{ backgroundColor: '#FFFBF5' }}>
+      <div className="flex items-center justify-between px-6 py-4 shadow-sm z-30" style={{ backgroundColor: '#FFFBF5', paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
         <button onClick={() => setSidebarOpen(true)} className="p-2 transition-opacity hover:opacity-70">
           <Menu className="w-6 h-6" style={{ color: '#6B5B95' }} />
         </button>
@@ -351,7 +351,7 @@ export function ChatJP() {
       </div>
 
       {/* Input Bar */}
-      <div className="px-6 py-4 shadow-lg" style={{ backgroundColor: '#FFFBF5' }}>
+      <div className="px-6 pt-4 shadow-lg" style={{ backgroundColor: '#FFFBF5', paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}>
         <div className="flex items-center gap-3 max-w-2xl mx-auto">
           <Input
             type="text"

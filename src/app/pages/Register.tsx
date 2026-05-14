@@ -58,8 +58,8 @@ export function Register() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-6 relative"
-      style={{ background: 'linear-gradient(135deg, #E6E6FA 0%, #FFFBF5 100%)' }}
+      className="min-h-full flex flex-col items-center justify-center px-6 relative"
+      style={{ background: 'linear-gradient(135deg, #E6E6FA 0%, #FFFBF5 100%)', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <button
         onClick={() => navigate('/')}

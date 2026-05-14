@@ -80,9 +80,9 @@ export function VoiceSelect() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FFFBF5' }}>
+    <div className="min-h-full flex flex-col" style={{ backgroundColor: '#FFFBF5' }}>
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center gap-3 px-6 py-4" style={{ borderBottom: '1px solid #E6E6FA', backgroundColor: '#FFFBF5' }}>
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center gap-3 px-6 py-4" style={{ borderBottom: '1px solid #E6E6FA', backgroundColor: '#FFFBF5', paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
         <button onClick={() => navigate(-1)} className="p-2 transition-opacity hover:opacity-60">
           <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
         </button>

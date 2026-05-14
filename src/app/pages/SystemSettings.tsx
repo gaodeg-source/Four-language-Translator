@@ -20,7 +20,7 @@ export function SystemSettings() {
   };
 
   return (
-    <div className="min-h-screen px-6 md:px-12 lg:px-24 py-8" style={{ backgroundColor: '#FFFBF5' }}>
+    <div className="min-h-full px-6 py-8" style={{ backgroundColor: '#FFFBF5', paddingTop: 'calc(env(safe-area-inset-top) + 2rem)' }}>
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}

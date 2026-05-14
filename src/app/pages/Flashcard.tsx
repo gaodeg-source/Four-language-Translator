@@ -85,8 +85,8 @@ export function Flashcard() {
   return (
     <div 
       ref={cardRef}
-      className="h-screen flex flex-col items-center justify-center p-8 relative"
-      style={{ backgroundColor: '#FFFFFF' }}
+      className="h-full flex flex-col items-center justify-center p-8 relative"
+      style={{ backgroundColor: '#FFFFFF', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {/* Top Actions */}
       <div className="absolute top-6 right-6 flex items-center gap-3">
