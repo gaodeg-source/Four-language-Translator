@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useLocation } from 'react-router';
 import { Settings, Send, Copy, Maximize2, Menu, Plus, X, Star, Volume2, User } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -42,6 +42,7 @@ function getChatRoute(chat: any) {
 export function ChatEN() {
   const navigate = useNavigate();
   const { chatId } = useParams();
+  const location = useLocation();
   const [chatData, setChatData] = useState<ChatData | null>(null);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -99,7 +100,7 @@ export function ChatEN() {
     const onPopState = () => { void loadData(); };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [chatId, navigate]);
+  }, [chatId, navigate, location.key]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });

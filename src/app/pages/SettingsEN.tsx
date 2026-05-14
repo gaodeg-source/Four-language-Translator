@@ -6,6 +6,7 @@ import { ToneSettingsEN } from '../../components/ToneSettingsEN';
 import { t, getSystemLang } from '../../i18n';
 import { getVoiceLabel } from './VoiceSelect';
 import { saveChatToCloud } from '../lib/chatHistory';
+import { CropModal } from '../components/CropModal';
 
 interface ChatData {
   id: string;
@@ -32,6 +33,7 @@ export function SettingsEN() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [voice, setVoice] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
 
   const hasUnsavedChanges = Boolean(chatData) && (
     (chatName.trim() || chatData?.name || '') !== (chatData?.name || '') ||
@@ -96,6 +98,16 @@ export function SettingsEN() {
   };
 
   if (!chatData) return null;
+
+  if (cropSrc) {
+    return (
+      <CropModal
+        imageSrc={cropSrc}
+        onConfirm={(cropped) => { setBackgroundImage(cropped); setCropSrc(null); }}
+        onCancel={() => setCropSrc(null)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-full px-6 pb-8 overflow-y-auto" style={{ backgroundColor: '#FFFBF5', paddingTop: 'calc(env(safe-area-inset-top) + 4rem)' }}>
@@ -169,9 +181,10 @@ export function SettingsEN() {
                   const file = e.target.files?.[0];
                   if (file) {
                     const reader = new FileReader();
-                    reader.onloadend = () => setBackgroundImage(reader.result as string);
+                    reader.onloadend = () => setCropSrc(reader.result as string);
                     reader.readAsDataURL(file);
                   }
+                  e.target.value = '';
                 }}
               />
             </div>
