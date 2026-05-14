@@ -7,6 +7,11 @@ import { t } from '../../i18n';
 import { toast } from 'sonner';
 import { apiUrl } from '../lib/apiBase';
 import { getMostRecentChatPath } from '../lib/chatHistory';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { App as CapApp } from '@capacitor/app';
+
+const NATIVE_REDIRECT_URI = 'languagetranslator://login';
 
 const GOOGLE_OAUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_OAUTH_SCOPES = 'openid profile email';
@@ -47,72 +52,85 @@ export function Login() {
   const [oauthLoading, setOauthLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
 
-  useEffect(() => {
-    const handleOAuthCallback = async () => {
-      if (!window.location.hash.includes('access_token') && !window.location.hash.includes('error=')) {
-        return;
-      }
+  const processOAuthParams = async (params: Record<string, string>) => {
+    if (params.error) {
+      toast.error(params.error === 'access_denied' ? t('login.oauthDenied') : `${t('login.oauthFailed')}: ${params.error}`);
+      return;
+    }
 
-      const params = parseHashParams(window.location.hash);
-      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+    const savedState = localStorage.getItem(OAUTH_STATE_KEY);
+    if (!params.state || !savedState || params.state !== savedState) {
+      toast.error(t('login.oauthStateMismatch'));
+      return;
+    }
+    localStorage.removeItem(OAUTH_STATE_KEY);
 
-      if (params.error) {
-        toast.error(params.error === 'access_denied' ? t('login.oauthDenied') : `${t('login.oauthFailed')}: ${params.error}`);
-        return;
-      }
+    const accessToken = params.access_token;
+    if (!accessToken) {
+      toast.error(t('login.oauthFailed'));
+      return;
+    }
 
-      const savedState = localStorage.getItem(OAUTH_STATE_KEY);
-      if (!params.state || !savedState || params.state !== savedState) {
-        toast.error(t('login.oauthStateMismatch'));
-        return;
-      }
-      localStorage.removeItem(OAUTH_STATE_KEY);
-
-      const accessToken = params.access_token;
-      if (!accessToken) {
-        toast.error(t('login.oauthFailed'));
-        return;
-      }
+    try {
+      const profileResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!profileResp.ok) throw new Error('Failed to fetch profile');
+      const profile = await profileResp.json();
 
       try {
-        const goNext = async () => {
-          const nextPath = await getMostRecentChatPath();
-          navigate(nextPath || '/select-language');
-        };
-
-        const profileResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+        const syncResp = await fetch(apiUrl('/api/auth/google'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile }),
         });
-        if (!profileResp.ok) throw new Error('Failed to fetch profile');
-        const profile = await profileResp.json();
-
-        try {
-          const syncResp = await fetch(apiUrl('/api/auth/google'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ profile }),
-          });
-          if (syncResp.ok) {
-            const syncData = await syncResp.json();
-            if (syncData?.user?.id) localStorage.setItem('authUserId', syncData.user.id);
-            localStorage.setItem('authUser', JSON.stringify(syncData?.user || {}));
-          } else if (profile?.sub) {
-            // Fallback for legacy Google sessions: keep a stable id key for profile lookup.
-            localStorage.setItem('authUserId', profile.sub);
-          }
-        } catch {
-          if (profile?.sub) localStorage.setItem('authUserId', profile.sub);
+        if (syncResp.ok) {
+          const syncData = await syncResp.json();
+          if (syncData?.user?.id) localStorage.setItem('authUserId', syncData.user.id);
+          localStorage.setItem('authUser', JSON.stringify(syncData?.user || {}));
+        } else if (profile?.sub) {
+          localStorage.setItem('authUserId', profile.sub);
         }
-
-        localStorage.setItem('authProvider', 'google');
-        localStorage.setItem('googleAccessToken', accessToken);
-        localStorage.setItem('googleUser', JSON.stringify(profile));
-        await goNext();
       } catch {
-        toast.error(t('login.oauthFailed'));
+        if (profile?.sub) localStorage.setItem('authUserId', profile.sub);
       }
+
+      localStorage.setItem('authProvider', 'google');
+      localStorage.setItem('googleAccessToken', accessToken);
+      localStorage.setItem('googleUser', JSON.stringify(profile));
+      const nextPath = await getMostRecentChatPath();
+      navigate(nextPath || '/select-language');
+    } catch {
+      toast.error(t('login.oauthFailed'));
+    }
+  };
+
+  useEffect(() => {
+    // Native: listen for deep link callback from SFSafariViewController
+    if (Capacitor.isNativePlatform()) {
+      const listener = CapApp.addListener('appUrlOpen', async ({ url }) => {
+        if (!url.startsWith(NATIVE_REDIRECT_URI)) return;
+        await Browser.close();
+        const hashIndex = url.indexOf('#');
+        const params = hashIndex !== -1 ? parseHashParams(url.slice(hashIndex)) : {};
+        await processOAuthParams(params);
+      });
+      const checkLoggedIn = async () => {
+        const userId = localStorage.getItem('authUserId');
+        if (!userId) return;
+        const nextPath = await getMostRecentChatPath();
+        navigate(nextPath || '/select-language');
+      };
+      void checkLoggedIn();
+      return () => { listener.then(h => h.remove()); };
+    }
+
+    // Web: handle hash-based OAuth callback
+    const handleOAuthCallback = async () => {
+      if (!window.location.hash.includes('access_token') && !window.location.hash.includes('error=')) return;
+      const params = parseHashParams(window.location.hash);
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+      await processOAuthParams(params);
     };
 
     const maybeRedirectIfLoggedIn = async () => {
@@ -129,7 +147,10 @@ export function Login() {
 
   const handleGoogleOAuth = () => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || window.location.origin + '/';
+    const isNative = Capacitor.isNativePlatform();
+    const redirectUri = isNative
+      ? NATIVE_REDIRECT_URI
+      : (import.meta.env.VITE_GOOGLE_REDIRECT_URI || window.location.origin + '/');
 
     if (!clientId) {
       toast.error(t('login.oauthMissingClientId'));
@@ -149,7 +170,12 @@ export function Login() {
     authUrl.searchParams.set('include_granted_scopes', 'true');
     authUrl.searchParams.set('prompt', 'select_account');
 
-    window.location.assign(authUrl.toString());
+    if (isNative) {
+      Browser.open({ url: authUrl.toString(), presentationStyle: 'popover' })
+        .catch(() => setOauthLoading(false));
+    } else {
+      window.location.assign(authUrl.toString());
+    }
   };
 
   const handleLogin = (e: React.FormEvent) => {
