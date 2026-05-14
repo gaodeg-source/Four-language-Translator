@@ -108,7 +108,7 @@ const corsOptions = {
 };
 
 const app = express();
-app.options('*', cors(corsOptions)); // explicit preflight handler for all routes
+app.options(/.*/, cors(corsOptions)); // preflight handler for all routes (Express 5 requires regex, not bare *)
 app.use(cors(corsOptions));
 app.use(express.json());
 
