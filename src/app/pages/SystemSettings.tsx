@@ -24,7 +24,8 @@ export function SystemSettings() {
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-6 left-6 z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
+        className="fixed z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
+        style={{ top: 'calc(env(safe-area-inset-top) + 1rem)', left: '1.5rem' }}
       >
         <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
         <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('sysSettings.back')}</span>

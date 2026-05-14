@@ -90,7 +90,8 @@ export function ForgotPassword() {
     >
       <button
         onClick={() => navigate('/')}
-        className="absolute top-6 left-6 p-2 transition-opacity hover:opacity-70"
+        className="absolute p-2 transition-opacity hover:opacity-70"
+        style={{ top: 'calc(env(safe-area-inset-top) + 1rem)', left: '1.5rem' }}
       >
         <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
       </button>

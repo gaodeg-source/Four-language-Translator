@@ -6,6 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     androidScheme: 'https',
+    allowNavigation: ['four-language-translator.vercel.app'],
   },
   ios: {
     contentInset: 'never',

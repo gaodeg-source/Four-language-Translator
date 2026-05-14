@@ -89,7 +89,7 @@ export function Flashcard() {
       style={{ backgroundColor: '#FFFFFF', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {/* Top Actions */}
-      <div className="absolute top-6 right-6 flex items-center gap-3">
+      <div className="absolute right-6 flex items-center gap-3" style={{ top: 'calc(env(safe-area-inset-top) + 1rem)' }}>
         <button
           onClick={handleSaveToAlbum}
           className="w-12 h-12 flex items-center justify-center shadow-lg transition-transform hover:scale-105"

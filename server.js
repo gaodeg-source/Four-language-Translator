@@ -100,8 +100,16 @@ const { getDb } = require('./db');
 dotenv.config();
 
 console.log('OPENAI_API_KEY loaded:', process.env.OPENAI_API_KEY ? '[OK]' : '[MISSING]');
+const corsOptions = {
+  origin: '*',
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false,
+};
+
 const app = express();
-app.use(cors());
+app.options('*', cors(corsOptions)); // explicit preflight handler for all routes
+app.use(cors(corsOptions));
 app.use(express.json());
 
 let userIndexEnsured = false;
