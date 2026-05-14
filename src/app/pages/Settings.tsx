@@ -1,12 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ArrowLeft, Upload, Pencil, Check, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Upload, Pencil, Check } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { ToneSettingsUI } from '../../components/ToneSettingsUI';
 import { t, getSystemLang } from '../../i18n';
-import { getVoiceLabel } from './VoiceSelect';
+import { VOICES } from './VoiceSelect';
 import { saveChatToCloud } from '../lib/chatHistory';
 import { CropModal } from '../components/CropModal';
+import { apiUrl } from '../lib/apiBase';
+import { toast } from 'sonner';
+
+type Tab = 'tone' | 'background' | 'voice';
+type Lang = 'en' | 'cn' | 'kr' | 'jp';
+
+const DEMO_TEXT: Record<Lang, string> = {
+  cn: '你好，很高兴认识你',
+  en: 'Hi, nice to meet you',
+  kr: '안녕하세요, 만나서 반갑습니다',
+  jp: 'こんにちは、はじめまして',
+};
 
 interface ChatData {
   id: string;
@@ -21,6 +33,12 @@ interface ChatData {
   voice?: string;
 }
 
+function autoSave(chatData: ChatData, currentKey: string) {
+  localStorage.setItem(currentKey, JSON.stringify(chatData));
+  localStorage.setItem('chat_' + chatData.id, JSON.stringify(chatData));
+  void saveChatToCloud(chatData);
+}
+
 export function Settings() {
   const navigate = useNavigate();
   const { chatId } = useParams();
@@ -32,16 +50,18 @@ export function Settings() {
   const [chatName, setChatName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
   const [voice, setVoice] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('tone');
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const lang = (getSystemLang() || 'cn') as Lang;
 
-  const hasUnsavedChanges = Boolean(chatData) && (
-    (chatName.trim() || chatData?.name || '') !== (chatData?.name || '') ||
-    backgroundImage !== (chatData?.background ?? null) ||
+  const hasToneChanges = Boolean(chatData) && (
+    (chatName.trim() || '') !== (chatData?.name || '') ||
     isPolite !== (chatData?.isPolite ?? true) ||
     JSON.stringify(vibes) !== JSON.stringify(chatData?.vibes ?? []) ||
-    personaPrompt !== (chatData?.personaPrompt || '') ||
-    voice !== (chatData?.voice || '')
+    personaPrompt !== (chatData?.personaPrompt || '')
   );
 
   useEffect(() => {
@@ -55,46 +75,87 @@ export function Settings() {
       setVibes(data.vibes ?? []);
       setPersonaPrompt(data.personaPrompt || '');
       setChatName(data.name || '');
-      const pending = localStorage.getItem('_pendingVoice');
-      if (pending !== null) {
-        setVoice(pending);
-        localStorage.removeItem('_pendingVoice');
-      } else {
-        setVoice(data.voice || '');
-      }
+      setVoice(data.voice || '');
     }
   }, [chatId]);
 
-  const handleSave = async (goBack = true) => {
-    if (chatData) {
-      const updatedChat = {
-        ...chatData,
-        name: chatName.trim() || chatData.name,
-        background: backgroundImage,
-        isPolite,
-        vibes,
-        personaPrompt,
-        voice,
-      };
-      setChatData(updatedChat);
-      localStorage.setItem('currentChat', JSON.stringify(updatedChat));
-      localStorage.setItem('chat_' + updatedChat.id, JSON.stringify(updatedChat));
-      const allChats = JSON.parse(localStorage.getItem('chatList') || '[]');
-      const idx = allChats.findIndex((c: any) => c.id === updatedChat.id);
-      if (idx !== -1) { allChats[idx].name = updatedChat.name; localStorage.setItem('chatList', JSON.stringify(allChats)); }
-      void saveChatToCloud(updatedChat);
-      if (goBack) navigate(`/chat/${updatedChat.id}`, { replace: true });
+  const handleSaveTone = async () => {
+    if (!chatData) return;
+    const updated = {
+      ...chatData,
+      name: chatName.trim() || chatData.name,
+      isPolite,
+      vibes,
+      personaPrompt,
+    };
+    setChatData(updated);
+    const allChats = JSON.parse(localStorage.getItem('chatList') || '[]');
+    const idx = allChats.findIndex((c: any) => c.id === updated.id);
+    if (idx !== -1) { allChats[idx].name = updated.name; localStorage.setItem('chatList', JSON.stringify(allChats)); }
+    autoSave(updated, 'currentChat');
+    navigate(`/chat/${updated.id}`, { replace: true });
+  };
+
+  const handleBackgroundConfirm = (cropped: string) => {
+    if (!chatData) return;
+    const updated = { ...chatData, background: cropped };
+    setChatData(updated);
+    setBackgroundImage(cropped);
+    setCropSrc(null);
+    autoSave(updated, 'currentChat');
+  };
+
+  const handleRemoveBackground = () => {
+    if (!chatData) return;
+    const updated = { ...chatData, background: null };
+    setChatData(updated);
+    setBackgroundImage(null);
+    autoSave(updated, 'currentChat');
+  };
+
+  const handleSelectVoice = (voiceId: string) => {
+    if (!chatData) return;
+    setVoice(voiceId);
+    const updated = { ...chatData, voice: voiceId };
+    setChatData(updated);
+    autoSave(updated, 'currentChat');
+  };
+
+  const handleDemo = async (voiceId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!voiceId || playingId === voiceId) return;
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    setPlayingId(voiceId);
+    try {
+      const res = await fetch(apiUrl('/api/tts'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: DEMO_TEXT[lang], targetLang: lang, voice: voiceId }),
+      });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => { setPlayingId(null); URL.revokeObjectURL(url); audioRef.current = null; };
+      audio.onerror = () => { setPlayingId(null); URL.revokeObjectURL(url); audioRef.current = null; };
+      await audio.play();
+    } catch {
+      setPlayingId(null);
+      toast.error(t('chat.ttsError'));
     }
   };
 
-  const handleBack = async () => {
-    if (!hasUnsavedChanges) {
-      navigate(-1);
+  const handleBack = () => {
+    if (activeTab === 'tone' && hasToneChanges) {
+      if (window.confirm(t('settings.unsavedConfirm'))) {
+        void handleSaveTone();
+      } else {
+        navigate(-1);
+      }
       return;
     }
-    const shouldSave = window.confirm(t('settings.unsavedConfirm'));
-    if (!shouldSave) return;
-    await handleSave(true);
+    navigate(-1);
   };
 
   if (!chatData) return null;
@@ -103,70 +164,138 @@ export function Settings() {
     return (
       <CropModal
         imageSrc={cropSrc}
-        onConfirm={(cropped) => { setBackgroundImage(cropped); setCropSrc(null); }}
+        onConfirm={handleBackgroundConfirm}
         onCancel={() => setCropSrc(null)}
       />
     );
   }
 
+  const tabs: Tab[] = ['tone', 'background', 'voice'];
+  const tabLabel = (tab: Tab) => t(`settings.tab${tab.charAt(0).toUpperCase() + tab.slice(1)}` as any);
+
   return (
-    <div className="min-h-full px-6 pb-8 overflow-y-auto" style={{ backgroundColor: '#FFFBF5', paddingTop: 'calc(env(safe-area-inset-top) + 4rem)' }}>
-      {/* Back Button */}
-      <button
-        onClick={() => { void handleBack(); }}
-        className="fixed z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
-        style={{ top: 'calc(env(safe-area-inset-top) + 1.25rem)', left: '1.5rem' }}
+    <div className="min-h-full flex flex-col overflow-hidden" style={{ backgroundColor: '#FFFBF5' }}>
+      {/* Fixed header */}
+      <div
+        className="flex-shrink-0 px-6"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)', paddingBottom: '0.75rem', backgroundColor: '#FFFBF5' }}
       >
-        <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
-        <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('settings.back')}</span>
-      </button>
-      <div className="max-w-2xl mx-auto">
-        {/* Title */}
-        <div className="mb-10">
-          <h1 className="text-3xl mb-2" style={{ fontWeight: 700, color: '#6B5B95', letterSpacing: '-0.02em' }}>
-            {t('settings.title')}
-          </h1>
-          <div className="flex items-center gap-2">
-            {isEditingName ? (
-              <>
-                <input
-                  autoFocus
-                  value={chatName}
-                  onChange={e => setChatName(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') setIsEditingName(false); }}
-                  className="border-0 outline-none bg-transparent"
-                  style={{ fontSize: '14px', color: '#9B8FA6', borderBottom: '1.5px solid #B8A9D4', paddingBottom: '2px' }}
-                />
-                <button onClick={() => setIsEditingName(false)} className="transition-opacity hover:opacity-70">
-                  <Check className="w-4 h-4" style={{ color: '#6B5B95' }} />
-                </button>
-              </>
-            ) : (
-              <>
-                <p style={{ fontSize: '14px', color: '#9B8FA6' }}>{chatName}</p>
-                <button onClick={() => setIsEditingName(true)} className="transition-opacity hover:opacity-70">
-                  <Pencil className="w-3.5 h-3.5" style={{ color: '#9B8FA6' }} />
-                </button>
-              </>
-            )}
-          </div>
+        {/* Back + Title row */}
+        <div className="flex items-center gap-3 mb-5">
+          <button onClick={handleBack} className="p-2 -ml-2 transition-opacity hover:opacity-70">
+            <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
+          </button>
+          <h1 className="text-xl" style={{ fontWeight: 700, color: '#6B5B95' }}>{t('settings.title')}</h1>
         </div>
-        <div className="space-y-10">
-          {/* Background Image */}
-          <div>
-            <h2 className="mb-4" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>
-              {t('settings.background')}
-            </h2>
+
+        {/* Tab bar */}
+        <div className="flex p-1 rounded-2xl" style={{ backgroundColor: '#EDE8F5' }}>
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="flex-1 py-2 text-sm transition-all"
+              style={{
+                borderRadius: '14px',
+                backgroundColor: activeTab === tab ? '#B8A9D4' : 'transparent',
+                color: activeTab === tab ? '#fff' : '#9B8FA6',
+                fontWeight: activeTab === tab ? 600 : 400,
+              }}
+            >
+              {tabLabel(tab)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-6 py-6">
+
+        {/* TONE TAB */}
+        {activeTab === 'tone' && (
+          <div className="space-y-8">
+            {/* Chat Name */}
+            <div>
+              <h2 className="mb-3" style={{ fontSize: '13px', fontWeight: 600, color: '#9B8FA6', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {t('settings.chatName')}
+              </h2>
+              <div className="flex items-center gap-2 px-4 h-12 shadow-sm" style={{ backgroundColor: '#FFFFFF', borderRadius: '16px' }}>
+                {isEditingName ? (
+                  <>
+                    <input
+                      autoFocus
+                      value={chatName}
+                      onChange={e => setChatName(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') setIsEditingName(false); }}
+                      className="flex-1 border-0 outline-none bg-transparent"
+                      style={{ fontSize: '15px', color: '#6B5B95' }}
+                    />
+                    <button onClick={() => setIsEditingName(false)}>
+                      <Check className="w-4 h-4" style={{ color: '#6B5B95' }} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex-1" style={{ fontSize: '15px', color: '#6B5B95' }}>{chatName}</span>
+                    <button onClick={() => setIsEditingName(true)}>
+                      <Pencil className="w-3.5 h-3.5" style={{ color: '#9B8FA6' }} />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <ToneSettingsUI
+              isPolite={isPolite}
+              setIsPolite={setIsPolite}
+              vibes={vibes}
+              setVibes={setVibes}
+              personaPrompt={personaPrompt}
+              setPersonaPrompt={setPersonaPrompt}
+            />
+
+            <div style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}>
+              <Button
+                onClick={() => { void handleSaveTone(); }}
+                disabled={!hasToneChanges}
+                className="w-full h-14 border-0 shadow-lg"
+                style={{
+                  backgroundColor: hasToneChanges ? '#B8A9D4' : '#D8D0E3',
+                  color: '#FFFFFF',
+                  borderRadius: '24px',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  opacity: hasToneChanges ? 1 : 0.6,
+                  cursor: hasToneChanges ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {t('settings.save')}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* BACKGROUND TAB */}
+        {activeTab === 'background' && (
+          <div className="space-y-5" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}>
+            <p style={{ fontSize: '13px', color: '#9B8FA6' }}>
+              {backgroundImage ? t('settings.applied') : t('settings.tapToUpload')}
+            </p>
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="relative block w-full h-48 cursor-pointer transition-opacity hover:opacity-90 shadow-md"
-              style={{ backgroundColor: backgroundImage ? 'transparent' : '#FFFFFF', borderRadius: '24px', border: backgroundImage ? 'none' : '2px dashed #D4C4E8' }}
+              className="relative w-full cursor-pointer transition-opacity hover:opacity-90 shadow-md"
+              style={{
+                height: '220px',
+                backgroundColor: backgroundImage ? 'transparent' : '#FFFFFF',
+                borderRadius: '24px',
+                border: backgroundImage ? 'none' : '2px dashed #D4C4E8',
+              }}
             >
               {backgroundImage ? (
                 <img src={backgroundImage} alt="Background" className="w-full h-full object-cover" style={{ borderRadius: '24px' }} />
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="w-14 h-14 flex items-center justify-center mb-3" style={{ backgroundColor: '#E6E6FA', borderRadius: '16px' }}>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                  <div className="w-14 h-14 flex items-center justify-center" style={{ backgroundColor: '#E6E6FA', borderRadius: '16px' }}>
                     <Upload className="w-7 h-7" style={{ color: '#6B5B95' }} />
                   </div>
                   <p style={{ fontSize: '14px', color: '#9B8FA6' }}>{t('settings.tapToUpload')}</p>
@@ -191,55 +320,58 @@ export function Settings() {
             {backgroundImage && (
               <button
                 type="button"
-                onClick={() => setBackgroundImage(null)}
-                className="mt-3 w-full text-center transition-opacity hover:opacity-70"
+                onClick={handleRemoveBackground}
+                className="w-full text-center py-2 transition-opacity hover:opacity-70"
                 style={{ fontSize: '13px', color: '#9B8FA6' }}
               >
                 {t('settings.removeBackground')}
               </button>
             )}
           </div>
-          {/* Tone Settings UI */}
-          <ToneSettingsUI
-            isPolite={isPolite}
-            setIsPolite={setIsPolite}
-            vibes={vibes}
-            setVibes={setVibes}
-            personaPrompt={personaPrompt}
-            setPersonaPrompt={setPersonaPrompt}
-          />
-          {/* Voice Model */}
-          <div>
-            <h2 className="mb-4" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{t('settings.voice')}</h2>
-            <button
-              onClick={() => { localStorage.setItem('_pendingVoice', voice); navigate('/voice-select'); }}
-              className="w-full flex items-center justify-between px-4 h-12 shadow-md cursor-pointer"
-              style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: 'none' }}
-            >
-              <span style={{ fontSize: '14px', color: '#6B5B95' }}>{getVoiceLabel(voice, getSystemLang())}</span>
-              <ChevronRight className="w-4 h-4" style={{ color: '#9B8FA6' }} />
-            </button>
+        )}
+
+        {/* VOICE TAB */}
+        {activeTab === 'voice' && (
+          <div className="space-y-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}>
+            {VOICES.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => handleSelectVoice(v.id)}
+                className="w-full flex items-center gap-3 p-4 transition-all"
+                style={{
+                  backgroundColor: voice === v.id ? '#E6E6FA' : '#FFFFFF',
+                  borderRadius: '16px',
+                  border: voice === v.id ? '2px solid #B8A9D4' : '2px solid transparent',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                }}
+              >
+                <div
+                  className="w-6 h-6 flex items-center justify-center flex-shrink-0"
+                  style={{
+                    borderRadius: '50%',
+                    border: voice === v.id ? 'none' : '2px solid #D4C4E8',
+                    backgroundColor: voice === v.id ? '#B8A9D4' : 'transparent',
+                  }}
+                >
+                  {voice === v.id && <Check className="w-3.5 h-3.5 text-white" />}
+                </div>
+                <span className="flex-1 text-left" style={{ fontSize: '15px', fontWeight: voice === v.id ? 600 : 400, color: '#6B5B95' }}>
+                  {v.label[lang]}
+                </span>
+                {v.id && (
+                  <button
+                    onClick={(e) => { void handleDemo(v.id, e); }}
+                    className="p-2 flex-shrink-0"
+                    disabled={playingId === v.id}
+                  >
+                    <span style={{ fontSize: '18px' }}>{playingId === v.id ? '⏸' : '▶'}</span>
+                  </button>
+                )}
+              </button>
+            ))}
           </div>
-          {/* Save Button */}
-          <div className="pt-4 pb-8">
-            <Button
-              onClick={() => { void handleSave(true); }}
-              disabled={!hasUnsavedChanges}
-              className="w-full h-14 border-0 shadow-lg"
-              style={{
-                backgroundColor: hasUnsavedChanges ? '#B8A9D4' : '#D8D0E3',
-                color: '#FFFFFF',
-                borderRadius: '24px',
-                fontSize: '16px',
-                fontWeight: 600,
-                opacity: hasUnsavedChanges ? 1 : 0.6,
-                cursor: hasUnsavedChanges ? 'pointer' : 'not-allowed',
-              }}
-            >
-              {t('settings.save')}
-            </Button>
-          </div>
-        </div>
+        )}
+
       </div>
     </div>
   );

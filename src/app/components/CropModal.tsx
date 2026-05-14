@@ -12,24 +12,24 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string>
     img.src = imageSrc;
   });
 
+  // Cap output dimensions to keep data URL small enough for localStorage (~5MB limit)
+  const MAX_SIDE = 800;
+  const scale = Math.min(1, MAX_SIDE / Math.max(pixelCrop.width, pixelCrop.height));
+  const outW = Math.round(pixelCrop.width * scale);
+  const outH = Math.round(pixelCrop.height * scale);
+
   const canvas = document.createElement('canvas');
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+  canvas.width = outW;
+  canvas.height = outH;
   const ctx = canvas.getContext('2d')!;
 
   ctx.drawImage(
     image,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
-    0,
-    0,
-    pixelCrop.width,
-    pixelCrop.height,
+    pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height,
+    0, 0, outW, outH,
   );
 
-  return canvas.toDataURL('image/jpeg', 0.9);
+  return canvas.toDataURL('image/jpeg', 0.7);
 }
 
 interface CropModalProps {

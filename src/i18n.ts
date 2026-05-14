@@ -525,6 +525,30 @@ const translations: Record<string, Record<SystemLang, string>> = {
     kr: '배경 제거',
     jp: '背景を削除',
   },
+  'settings.tabTone': {
+    en: 'Tone',
+    cn: '语气',
+    kr: '어조',
+    jp: 'トーン',
+  },
+  'settings.tabBackground': {
+    en: 'Background',
+    cn: '背景',
+    kr: '배경',
+    jp: '背景',
+  },
+  'settings.tabVoice': {
+    en: 'Voice',
+    cn: '声音',
+    kr: '음성',
+    jp: '音声',
+  },
+  'settings.applied': {
+    en: '✓ Applied',
+    cn: '✓ 已应用',
+    kr: '✓ 적용됨',
+    jp: '✓ 適用済み',
+  },
   'settings.save': {
     en: 'Save Changes',
     cn: '保存更改',
