@@ -1,28 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeftRight, ArrowLeft } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { t, langLabel } from '../../i18n';
+import { t } from '../../i18n';
 
-const LANGUAGES = [
-  { code: 'cn', flag: '🇨🇳' },
-  { code: 'kr', flag: '🇰🇷' },
-  { code: 'en', flag: '🇬🇧' },
-  { code: 'jp', flag: '🇯🇵' },
-];
+const SANS = "'Nunito','Noto Sans KR','Zen Maru Gothic','Noto Sans SC',system-ui,sans-serif";
+const MONO = "'JetBrains Mono',ui-monospace,monospace";
 
-// Map target language to the correct setup route
-const SETUP_ROUTES: Record<string, string> = {
-  kr: '/setup',
-  en: '/setup-en',
-  jp: '/setup-jp',
-  cn: '/setup',     // fallback — uses KR setup page for X→CN (tone settings still apply)
+const LANGS: Record<string, { name: string; latin: string; code: string; hello: string }> = {
+  cn: { name: '中文',   latin: 'Chinese',  code: 'CN', hello: '你好' },
+  kr: { name: '한국어', latin: 'Korean',   code: 'KO', hello: '안녕' },
+  en: { name: 'English', latin: 'English', code: 'EN', hello: 'Hello' },
+  jp: { name: '日本語', latin: 'Japanese', code: 'JP', hello: 'こんにちは' },
 };
+const CODES = ['cn', 'kr', 'en', 'jp'];
 
-// When target is CN, route based on source language's tone settings page
+const SETUP_ROUTES: Record<string, string> = { kr: '/setup', en: '/setup-en', jp: '/setup-jp', cn: '/setup' };
 function getSetupRoute(source: string, target: string) {
   if (target === 'cn') {
-    // Use the source language's setup page so tone settings match
     if (source === 'kr') return '/setup';
     if (source === 'en') return '/setup-en';
     if (source === 'jp') return '/setup-jp';
@@ -30,155 +23,160 @@ function getSetupRoute(source: string, target: string) {
   return SETUP_ROUTES[target] || '/setup';
 }
 
+const ink   = '#2A1A3A';
+const ink2  = '#5A4A6A';
+const ink3  = '#9A8AAA';
+const line  = '#EFE5F7';
+const bg2   = '#FAF5FF';
+const accent = '#A865E0';
+
+function LangPill({ langCode, label }: { langCode: string; label: string }) {
+  const l = LANGS[langCode];
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingRight: 50, minHeight: 72 }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: 18, background: bg2, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: SANS, fontSize: 24, fontWeight: 800, color: ink,
+      }}>
+        {l.hello.slice(0, 1)}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: ink3 }}>{label}</span>
+        <div style={{ fontSize: 20, fontWeight: 600, color: ink, letterSpacing: '-0.01em', fontFamily: SANS }}>{l.name}</div>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: ink3, letterSpacing: '0.08em' }}>
+          {l.latin.toUpperCase()} · {l.code}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function LanguageSelect() {
   const navigate = useNavigate();
   const [source, setSource] = useState('cn');
   const [target, setTarget] = useState('kr');
-  const [sourceOpen, setSourceOpen] = useState(false);
-  const [targetOpen, setTargetOpen] = useState(false);
 
-  const sourceLang = LANGUAGES.find(l => l.code === source)!;
-  const targetLang = LANGUAGES.find(l => l.code === target)!;
-
-  const handleSwap = () => {
-    setSource(target);
-    setTarget(source);
+  const cycleSource = () => {
+    const next = CODES.filter(c => c !== target);
+    const idx = next.indexOf(source);
+    setSource(next[(idx + 1) % next.length]);
   };
+  const cycleTarget = () => {
+    const next = CODES.filter(c => c !== source);
+    const idx = next.indexOf(target);
+    setTarget(next[(idx + 1) % next.length]);
+  };
+  const swap = () => { const s = source; setSource(target); setTarget(s); };
 
   const handleContinue = () => {
     if (source === target) return;
     localStorage.setItem('selectedDirection', JSON.stringify({ sourceLang: source, targetLang: target }));
+    const recentRaw = localStorage.getItem('recentPairs');
+    const recent: { sourceLang: string; targetLang: string }[] = recentRaw ? (() => { try { return JSON.parse(recentRaw); } catch { return []; } })() : [];
+    const filtered = recent.filter(p => !(p.sourceLang === source && p.targetLang === target));
+    localStorage.setItem('recentPairs', JSON.stringify([{ sourceLang: source, targetLang: target }, ...filtered].slice(0, 4)));
     navigate(getSetupRoute(source, target));
   };
 
-  const selectSource = (code: string) => {
-    setSource(code);
-    if (code === target) setTarget(LANGUAGES.find(l => l.code !== code)!.code);
-    setSourceOpen(false);
-  };
-
-  const selectTarget = (code: string) => {
-    setTarget(code);
-    if (code === source) setSource(LANGUAGES.find(l => l.code !== code)!.code);
-    setTargetOpen(false);
-  };
+  const recentRaw = localStorage.getItem('recentPairs');
+  const recentPairs: { sourceLang: string; targetLang: string }[] = recentRaw ? (() => { try { return JSON.parse(recentRaw); } catch { return []; } })() : [];
+  const quickPairs = recentPairs.length > 0
+    ? recentPairs
+    : [{ sourceLang: 'cn', targetLang: 'kr' }, { sourceLang: 'en', targetLang: 'jp' }, { sourceLang: 'cn', targetLang: 'en' }];
 
   return (
-    <div
-      className="min-h-full flex flex-col items-center justify-center px-6 relative"
-      style={{ background: 'linear-gradient(135deg, #E6E6FA 0%, #FFFBF5 100%)', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
-    >
-      <button
-        onClick={() => navigate(-1)}
-        className="fixed z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
-        style={{ top: 'calc(env(safe-area-inset-top) + 1rem)', left: '1.5rem' }}
-      >
-        <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
-        <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('settings.back')}</span>
-      </button>
-      <h1
-        className="text-3xl mb-2"
-        style={{ fontWeight: 700, color: '#6B5B95', letterSpacing: '-0.02em' }}
-      >
-        {t('langSelect.title')}
-      </h1>
-      <p className="text-base mb-10" style={{ color: '#9B8FA6' }}>
-        {t('langSelect.subtitle')}
-      </p>
+    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', background: '#FFFFFF', fontFamily: SANS }}>
+      <div style={{ flex: 1, padding: '0 24px 24px', paddingTop: 'calc(env(safe-area-inset-top) + 52px)', display: 'flex', flexDirection: 'column' }}>
 
-      <div className="w-full max-w-md">
-        {/* Two dropdowns + swap button */}
-        <div className="flex items-center gap-3">
-          {/* Source dropdown */}
-          <div className="flex-1 relative">
-            <label className="block mb-2" style={{ fontSize: '13px', fontWeight: 600, color: '#9B8FA6' }}>{t('langSelect.from')}</label>
-            <button
-              onClick={() => { setSourceOpen(!sourceOpen); setTargetOpen(false); }}
-              className="w-full h-16 flex items-center gap-3 px-5 shadow-md transition-all hover:shadow-lg"
-              style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', border: sourceOpen ? '2px solid #B8A9D4' : '2px solid #E6E6FA' }}
-            >
-              <span style={{ fontSize: '26px' }}>{sourceLang.flag}</span>
-              <span style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{langLabel(sourceLang.code)}</span>
-              <svg className="ml-auto w-4 h-4" style={{ color: '#9B8FA6', transform: sourceOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-            </button>
-            {sourceOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 z-50 shadow-xl overflow-hidden" style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '2px solid #E6E6FA' }}>
-                {LANGUAGES.map(lang => (
-                  <button
-                    key={lang.code}
-                    onClick={() => selectSource(lang.code)}
-                    className="w-full flex items-center gap-3 px-5 py-3 transition-colors hover:bg-purple-50"
-                    style={{ backgroundColor: lang.code === source ? '#F3EEFF' : 'transparent' }}
-                  >
-                    <span style={{ fontSize: '22px' }}>{lang.flag}</span>
-                    <span style={{ fontSize: '15px', fontWeight: lang.code === source ? 700 : 500, color: '#6B5B95' }}>{langLabel(lang.code)}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: ink3, marginBottom: 8 }}>
+          {t('langSelect.step')}
+        </div>
+        <h1 style={{ fontFamily: SANS, fontSize: 38, lineHeight: 1.05, fontWeight: 800, color: ink, margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+          {t('langSelect.headline')}
+        </h1>
+        <p style={{ fontSize: 14, color: ink2, lineHeight: 1.5, margin: '0 0 24px' }}>
+          {t('langSelect.desc')}
+        </p>
 
-          {/* Swap button */}
-          <button
-            onClick={handleSwap}
-            className="mt-7 w-12 h-12 flex items-center justify-center shadow-md transition-transform hover:scale-110 active:scale-95"
-            style={{ backgroundColor: '#FFFFFF', borderRadius: '50%', border: '2px solid #E6E6FA', flexShrink: 0 }}
-          >
-            <ArrowLeftRight className="w-5 h-5" style={{ color: '#B8A9D4' }} />
+        {/* FROM / TO card */}
+        <div style={{
+          background: '#FFFFFF', border: `1px solid ${line}`, borderRadius: 24, padding: 18,
+          position: 'relative',
+          boxShadow: '0 1px 0 rgba(42,26,58,.03), 0 6px 20px rgba(42,26,58,.04)',
+        }}>
+          <button onClick={cycleSource} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+            <LangPill langCode={source} label={t('langSelect.from')} />
           </button>
 
-          {/* Target dropdown */}
-          <div className="flex-1 relative">
-            <label className="block mb-2" style={{ fontSize: '13px', fontWeight: 600, color: '#9B8FA6' }}>{t('langSelect.to')}</label>
-            <button
-              onClick={() => { setTargetOpen(!targetOpen); setSourceOpen(false); }}
-              className="w-full h-16 flex items-center gap-3 px-5 shadow-md transition-all hover:shadow-lg"
-              style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', border: targetOpen ? '2px solid #B8A9D4' : '2px solid #E6E6FA' }}
-            >
-              <span style={{ fontSize: '26px' }}>{targetLang.flag}</span>
-              <span style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{langLabel(targetLang.code)}</span>
-              <svg className="ml-auto w-4 h-4" style={{ color: '#9B8FA6', transform: targetOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-            </button>
-            {targetOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 z-50 shadow-xl overflow-hidden" style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '2px solid #E6E6FA' }}>
-                {LANGUAGES.map(lang => (
-                  <button
-                    key={lang.code}
-                    onClick={() => selectTarget(lang.code)}
-                    className="w-full flex items-center gap-3 px-5 py-3 transition-colors hover:bg-purple-50"
-                    style={{ backgroundColor: lang.code === target ? '#F3EEFF' : 'transparent' }}
-                  >
-                    <span style={{ fontSize: '22px' }}>{lang.flag}</span>
-                    <span style={{ fontSize: '15px', fontWeight: lang.code === target ? 700 : 500, color: '#6B5B95' }}>{langLabel(lang.code)}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+          <div style={{ height: 1, background: line, margin: '14px -18px' }} />
+
+          <button onClick={cycleTarget} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+            <LangPill langCode={target} label={t('langSelect.to')} />
+          </button>
+
+          {/* swap button */}
+          <button onClick={swap} style={{
+            position: 'absolute', right: 18, top: 'calc(50% - 18px)',
+            width: 36, height: 36, borderRadius: 18, border: `1px solid ${line}`,
+            background: accent, color: '#fff', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: `0 2px 6px ${accent}55`,
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="7 17 3 13 7 9"/><line x1="3" y1="13" x2="21" y2="13"/>
+              <polyline points="17 7 21 11 17 15"/><line x1="21" y1="11" x2="3" y2="11"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Quick pairs */}
+        <div style={{ marginTop: 22 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: ink3, marginBottom: 10 }}>
+            {t('langSelect.recentPairs')}
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {quickPairs.slice(0, 4).map((pair, i) => {
+              const active = pair.sourceLang === source && pair.targetLang === target;
+              return (
+                <button key={i}
+                  onClick={() => { setSource(pair.sourceLang); setTarget(pair.targetLang); }}
+                  style={{
+                    padding: '8px 14px', borderRadius: 999,
+                    background: active ? ink : bg2,
+                    color: active ? '#FFFFFF' : ink2,
+                    border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 12,
+                    letterSpacing: '0.06em', display: 'inline-flex', alignItems: 'center', gap: 6,
+                  }}>
+                  {LANGS[pair.sourceLang].code} → {LANGS[pair.targetLang].code}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Continue button */}
-        <Button
+        <div style={{ flex: 1 }} />
+
+        <button
           onClick={handleContinue}
           disabled={source === target}
-          className="w-full h-14 border-0 shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98] mt-8"
           style={{
-            backgroundColor: source === target ? '#D8D0E3' : '#B8A9D4',
-            color: '#FFFFFF',
-            borderRadius: '24px',
-            fontSize: '16px',
-            fontWeight: 600,
+            width: '100%', height: 56, padding: '0 8px 0 22px', border: 'none', borderRadius: 16,
+            background: ink, color: '#FFFFFF', fontFamily: SANS, fontSize: 15, fontWeight: 600,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            cursor: source === target ? 'not-allowed' : 'pointer',
             opacity: source === target ? 0.5 : 1,
-          }}
-        >
+            marginBottom: 'calc(env(safe-area-inset-bottom) + 0.5rem)',
+          }}>
           {t('langSelect.continue')}
-        </Button>
+          <span style={{
+            width: 40, height: 40, borderRadius: 12, background: accent, color: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </span>
+        </button>
       </div>
-
-      {/* Close dropdowns when clicking outside */}
-      {(sourceOpen || targetOpen) && (
-        <div className="fixed inset-0 z-40" onClick={() => { setSourceOpen(false); setTargetOpen(false); }} />
-      )}
     </div>
   );
 }

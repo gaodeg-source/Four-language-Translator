@@ -1,138 +1,102 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { X, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { t } from '../../i18n';
+
+const SANS = "'Nunito','Noto Sans KR','Zen Maru Gothic','Noto Sans SC',system-ui,sans-serif";
+const MONO = "'JetBrains Mono',ui-monospace,monospace";
+const accent = '#A865E0';
 
 export function Flashcard() {
   const navigate = useNavigate();
   const [text] = useState(localStorage.getItem('flashcardText') || '한국어');
-  const cardRef = useRef<HTMLDivElement>(null);
 
-  const handleSaveToAlbum = async () => {
-    if (!cardRef.current) return;
-
+  const handleSave = async () => {
     try {
-      // Create canvas from the flashcard
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-
-      // Set canvas size
       canvas.width = 1080;
       canvas.height = 1920;
-
-      // Draw white background
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw text
-      ctx.fillStyle = '#000000';
-      ctx.font = 'bold 120px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.fillStyle = '#2A1A3A';
+      ctx.font = `bold 140px ${SANS}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-
-      // Wrap text if needed
-      const maxWidth = canvas.width - 200;
-      const words = text.split('');
+      const maxWidth = canvas.width - 160;
+      const lineHeight = 160;
+      const chars = text.split('');
       let line = '';
-      let y = canvas.height / 2;
-      const lineHeight = 140;
       const lines: string[] = [];
-
-      for (let i = 0; i < words.length; i++) {
-        const testLine = line + words[i];
-        const metrics = ctx.measureText(testLine);
-        
-        if (metrics.width > maxWidth && line !== '') {
-          lines.push(line);
-          line = words[i];
-        } else {
-          line = testLine;
-        }
+      for (const ch of chars) {
+        const test = line + ch;
+        if (ctx.measureText(test).width > maxWidth && line !== '') { lines.push(line); line = ch; }
+        else { line = test; }
       }
       lines.push(line);
-
-      // Center vertically
-      y = (canvas.height - (lines.length - 1) * lineHeight) / 2;
-
-      // Draw each line
-      lines.forEach((line, index) => {
-        ctx.fillText(line, canvas.width / 2, y + index * lineHeight);
-      });
-
-      // Convert to blob
+      const startY = (canvas.height - (lines.length - 1) * lineHeight) / 2;
+      lines.forEach((l, i) => ctx.fillText(l, canvas.width / 2, startY + i * lineHeight));
       canvas.toBlob((blob) => {
         if (!blob) return;
-
-        // Create download link
         const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `flashcard-${Date.now()}.png`;
-        link.href = url;
-        link.click();
-
-        // Clean up
+        const a = document.createElement('a');
+        a.download = `flashcard-${Date.now()}.png`;
+        a.href = url;
+        a.click();
         URL.revokeObjectURL(url);
         toast.success(t('flashcard.saved'));
       }, 'image/png');
-    } catch (error) {
-      toast.error(t('flashcard.saveFailed'));
-      console.error(error);
-    }
+    } catch { toast.error(t('flashcard.saveFailed')); }
   };
 
   return (
-    <div 
-      ref={cardRef}
-      className="h-full flex flex-col items-center justify-center p-8 relative"
-      style={{ backgroundColor: '#FFFFFF', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
-    >
-      {/* Top Actions */}
-      <div className="absolute right-6 flex items-center gap-3" style={{ top: 'calc(env(safe-area-inset-top) + 1rem)' }}>
-        <button
-          onClick={handleSaveToAlbum}
-          className="w-12 h-12 flex items-center justify-center shadow-lg transition-transform hover:scale-105"
-          style={{
-            backgroundColor: '#B8A9D4',
-            borderRadius: '24px',
-          }}
-          aria-label="Save to album"
-        >
-          <Download className="w-6 h-6 text-white" />
-        </button>
-        <button
-          onClick={() => navigate(-1)}
-          className="w-12 h-12 flex items-center justify-center shadow-lg transition-transform hover:scale-105"
-          style={{
-            backgroundColor: '#FFD1DC',
-            borderRadius: '24px',
-          }}
-          aria-label="Close"
-        >
-          <X className="w-6 h-6" style={{ color: '#6B5B95' }} />
-        </button>
+    <div style={{
+      height: '100%', display: 'flex', flexDirection: 'column',
+      background: '#FFFFFF', fontFamily: SANS, position: 'relative',
+    }}>
+      {/* top actions */}
+      <div style={{
+        position: 'absolute', top: 'calc(env(safe-area-inset-top) + 52px)', left: 16, right: 16,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10,
+      }}>
+        <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(42,26,58,.5)' }}>
+          flashcard
+        </span>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={handleSave} style={{
+            width: 38, height: 38, borderRadius: 12, border: 'none',
+            background: 'rgba(42,26,58,.08)', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2A1A3A',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+          <button onClick={() => navigate(-1)} style={{
+            width: 38, height: 38, borderRadius: 12, border: 'none',
+            background: accent, color: '#fff', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
       </div>
 
-      {/* Main Korean Text */}
-      <div className="text-center max-w-4xl px-4">
-        <p 
-          className="break-words select-text"
-          style={{
-            fontSize: 'clamp(64px, 15vw, 128px)',
-            fontWeight: 700,
-            color: '#000000',
-            lineHeight: '1.2',
-            letterSpacing: '-0.03em',
-          }}
-        >
+      {/* big centered text */}
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        padding: '0 24px', textAlign: 'center',
+      }}>
+        <div style={{
+          fontFamily: SANS, fontSize: 60, lineHeight: 1.15, fontWeight: 600,
+          color: '#2A1A3A', letterSpacing: '-0.02em',
+          wordBreak: 'break-word',
+        }}>
           {text}
-        </p>
+        </div>
       </div>
 
-      {/* Bottom Hint */}
-      <div className="absolute bottom-8 left-0 right-0 text-center">
-        <p style={{ fontSize: '14px', color: '#9B8FA6' }}>
+      <div style={{ textAlign: 'center', paddingBottom: 'calc(env(safe-area-inset-bottom) + 2rem)' }}>
+        <p style={{ fontSize: 12, color: 'rgba(42,26,58,.4)', fontFamily: MONO, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           {t('flashcard.hint')}
         </p>
       </div>

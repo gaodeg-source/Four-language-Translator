@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Heart, Languages } from 'lucide-react';
-import { Input } from '../components/ui/input';
-import { Button } from '../components/ui/button';
-import { t } from '../../i18n';
+import { t, getSystemLang } from '../../i18n';
 import { toast } from 'sonner';
 import { apiUrl } from '../lib/apiBase';
 import { getMostRecentChatPath } from '../lib/chatHistory';
@@ -49,72 +46,41 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [oauthLoading, setOauthLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
+  const currentSystemLang = getSystemLang().toUpperCase();
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
-      if (!window.location.hash.includes('access_token') && !window.location.hash.includes('error=')) {
-        return;
-      }
-
+      if (!window.location.hash.includes('access_token') && !window.location.hash.includes('error=')) return;
       const params = parseHashParams(window.location.hash);
       window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-
       if (params.error) {
         toast.error(params.error === 'access_denied' ? t('login.oauthDenied') : `${t('login.oauthFailed')}: ${params.error}`);
         return;
       }
-
       const savedState = localStorage.getItem(OAUTH_STATE_KEY);
-      if (!params.state || !savedState || params.state !== savedState) {
-        toast.error(t('login.oauthStateMismatch'));
-        return;
-      }
+      if (!params.state || !savedState || params.state !== savedState) { toast.error(t('login.oauthStateMismatch')); return; }
       localStorage.removeItem(OAUTH_STATE_KEY);
-
       const accessToken = params.access_token;
-      if (!accessToken) {
-        toast.error(t('login.oauthFailed'));
-        return;
-      }
-
+      if (!accessToken) { toast.error(t('login.oauthFailed')); return; }
       try {
-        const goNext = async () => {
-          const nextPath = await getMostRecentChatPath();
-          navigate(nextPath || '/select-language');
-        };
-
-        const profileResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
+        const goNext = async () => { const nextPath = await getMostRecentChatPath(); navigate(nextPath || '/select-language'); };
+        const profileResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
         if (!profileResp.ok) throw new Error('Failed to fetch profile');
         const profile = await profileResp.json();
-
         try {
-          const syncResp = await fetch(apiUrl('/api/auth/google'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ profile }),
-          });
+          const syncResp = await fetch(apiUrl('/api/auth/google'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ profile }) });
           if (syncResp.ok) {
             const syncData = await syncResp.json();
             if (syncData?.user?.id) localStorage.setItem('authUserId', syncData.user.id);
             localStorage.setItem('authUser', JSON.stringify(syncData?.user || {}));
-          } else if (profile?.sub) {
-            localStorage.setItem('authUserId', profile.sub);
-          }
-        } catch {
-          if (profile?.sub) localStorage.setItem('authUserId', profile.sub);
-        }
-
+          } else if (profile?.sub) { localStorage.setItem('authUserId', profile.sub); }
+        } catch { if (profile?.sub) localStorage.setItem('authUserId', profile.sub); }
         localStorage.setItem('authProvider', 'google');
         localStorage.setItem('googleAccessToken', accessToken);
         localStorage.setItem('googleUser', JSON.stringify(profile));
         await goNext();
-      } catch {
-        toast.error(t('login.oauthFailed'));
-      }
+      } catch { toast.error(t('login.oauthFailed')); }
     };
-
     const maybeRedirectIfLoggedIn = async () => {
       if (window.location.hash.includes('access_token') || window.location.hash.includes('error=')) return;
       const userId = localStorage.getItem('authUserId');
@@ -122,7 +88,6 @@ export function Login() {
       const nextPath = await getMostRecentChatPath();
       navigate(nextPath || '/select-language');
     };
-
     void handleOAuthCallback();
     void maybeRedirectIfLoggedIn();
   }, [navigate]);
@@ -130,16 +95,10 @@ export function Login() {
   const handleGoogleOAuth = () => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || window.location.origin + '/';
-
-    if (!clientId) {
-      toast.error(t('login.oauthMissingClientId'));
-      return;
-    }
-
+    if (!clientId) { toast.error(t('login.oauthMissingClientId')); return; }
     const state = createRandomState();
     localStorage.setItem(OAUTH_STATE_KEY, state);
     setOauthLoading(true);
-
     const authUrl = new URL(GOOGLE_OAUTH_ENDPOINT);
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', redirectUri);
@@ -148,7 +107,6 @@ export function Login() {
     authUrl.searchParams.set('state', state);
     authUrl.searchParams.set('include_granted_scopes', 'true');
     authUrl.searchParams.set('prompt', 'select_account');
-
     window.location.assign(authUrl.toString());
   };
 
@@ -156,171 +114,91 @@ export function Login() {
     e.preventDefault();
     const run = async () => {
       const normalizedEmail = email.trim().toLowerCase();
-      if (!normalizedEmail || !password) {
-        toast.error(t('login.validationRequired'));
-        return;
-      }
-
+      if (!normalizedEmail || !password) { toast.error(t('login.validationRequired')); return; }
       setLoginLoading(true);
       try {
-        const resp = await fetch(apiUrl('/api/auth/login'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: normalizedEmail, password }),
-        });
+        const resp = await fetch(apiUrl('/api/auth/login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: normalizedEmail, password }) });
         const data = await resp.json();
-        if (!resp.ok) {
-          toast.error(data?.error || t('login.invalidCredentials'));
-          return;
-        }
-
+        if (!resp.ok) { toast.error(data?.error || t('login.invalidCredentials')); return; }
         localStorage.setItem('authProvider', 'password');
         localStorage.setItem('authUserId', data.user.id);
         localStorage.setItem('authUser', JSON.stringify(data.user));
         const nextPath = await getMostRecentChatPath();
         navigate(nextPath || '/select-language');
-      } catch {
-        toast.error(t('login.loginFailed'));
-      } finally {
-        setLoginLoading(false);
-      }
+      } catch { toast.error(t('login.loginFailed')); }
+      finally { setLoginLoading(false); }
     };
     run();
   };
 
   return (
-    <div 
-      className="min-h-full flex flex-col items-center justify-center px-6 relative"
-      style={{
-        background: 'linear-gradient(135deg, #E6E6FA 0%, #FFFBF5 100%)',
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
-    >
-      {/* Interface Language Button */}
-      <button
-        onClick={() => navigate('/system-settings')}
-        className="absolute right-6 flex items-center gap-2 px-4 py-2.5 shadow-md transition-transform hover:scale-105"
-        style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '2px solid #E6E6FA', top: 'calc(env(safe-area-inset-top) + 1.5rem)' }}
-        aria-label={t('sysSettings.langTitle')}
-      >
-        <Languages className="w-5 h-5 shrink-0" style={{ color: '#6B5B95' }} />
-        <span className="text-sm font-medium whitespace-nowrap" style={{ color: '#6B5B95' }}>{t('sysSettings.langTitle')}</span>
-      </button>
+    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', background: '#FFFFFF', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', fontFamily: "'Nunito','Noto Sans KR','Zen Maru Gothic','Noto Sans SC',system-ui,sans-serif" }}>
+      <div style={{ flex: 1, padding: '60px 24px 16px', display: 'flex', flexDirection: 'column', gap: 28 }}>
 
-      {/* Logo & Welcome */}
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-20 h-20 mb-4" style={{ 
-          backgroundColor: '#FFD1DC',
-          borderRadius: '24px',
-        }}>
-          <Heart className="w-10 h-10" style={{ color: '#E6E6FA', fill: '#E6E6FA' }} />
-        </div>
-        <h1 className="text-3xl mb-2" style={{ 
-          fontWeight: 700,
-          color: '#6B5B95',
-          letterSpacing: '-0.02em'
-        }}>
-          {t('login.title')}
-        </h1>
-        <p className="text-base" style={{ color: '#9B8FA6' }}>
-          {t('login.subtitle')}
-        </p>
-      </div>
-
-      {/* Form */}
-      <form onSubmit={handleLogin} className="w-full max-w-sm space-y-4">
-        <div>
-          <Input
-            type="email"
-            placeholder={t('login.email')}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-14 px-5 border-0 shadow-md"
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '24px',
-              fontSize: '16px',
-              color: '#6B5B95',
-            }}
-            required
-          />
-        </div>
-        <div>
-          <Input
-            type="password"
-            placeholder={t('login.password')}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="h-14 px-5 border-0 shadow-md"
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '24px',
-              fontSize: '16px',
-              color: '#6B5B95',
-            }}
-            required
-          />
-        </div>
-
-        <div className="pt-4">
-          <Button
-            type="submit"
-            disabled={loginLoading}
-            className="w-full h-14 border-0 shadow-lg"
-            style={{
-              backgroundColor: '#B8A9D4',
-              color: '#FFFFFF',
-              borderRadius: '24px',
-              fontSize: '16px',
-              fontWeight: 600,
-            }}
-          >
-            {t('login.button')}
-          </Button>
-        </div>
-
-        {!isNative && (
-          <>
-            <div className="flex items-center gap-3 py-1">
-              <div className="h-px flex-1" style={{ backgroundColor: '#DCCFEA' }} />
-              <span className="text-xs" style={{ color: '#9B8FA6' }}>{t('login.socialHint')}</span>
-              <div className="h-px flex-1" style={{ backgroundColor: '#DCCFEA' }} />
-            </div>
-
-            <Button
-              type="button"
-              onClick={handleGoogleOAuth}
-              disabled={oauthLoading || loginLoading}
-              className="w-full border-0 flex items-center justify-center gap-2"
-              style={{
-                backgroundColor: '#FFFFFF',
-                color: '#3C4043',
-                borderRadius: '4px',
-                border: '1px solid #DADCE0',
-                height: '40px',
-                fontSize: '14px',
-                fontWeight: 500,
-                boxShadow: 'none',
-              }}
-            >
-              <GoogleLogo />
-              {t('login.googleButton')}
-            </Button>
-          </>
-        )}
-
-        <div className="flex items-center justify-end pt-1">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, color: '#9A8AAA', letterSpacing: '0.08em', textTransform: 'uppercase' }}>beep · 2026</span>
           <button
-            type="button"
-            onClick={() => navigate('/register')}
-            className="text-sm transition-opacity hover:opacity-70"
-            style={{ color: '#6B5B95' }}
+            onClick={() => navigate('/system-settings')}
+            style={{ background: '#FAF5FF', border: '1px solid #EFE5F7', borderRadius: 999, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#5A4A6A', cursor: 'pointer', fontFamily: 'Nunito' }}
           >
-            {t('login.createAccount')}
+            🌐 {currentSystemLang}
           </button>
         </div>
-      </form>
+
+        <div>
+          <div style={{ fontSize: 64, lineHeight: 0.95, fontWeight: 800, color: '#2A1A3A', letterSpacing: '-0.04em', marginBottom: 18, fontFamily: "'Nunito', sans-serif", display: 'flex', alignItems: 'baseline' }}>
+            beep
+            <span style={{ display: 'inline-flex', gap: 3, marginLeft: 4, alignItems: 'flex-end', paddingBottom: 6 }}>
+              <span style={{ width: 3, height: 9, borderRadius: 2, background: '#FFC93C', transform: 'rotate(-20deg)', display: 'inline-block' }} />
+              <span style={{ width: 3, height: 11, borderRadius: 2, background: '#FFC93C', display: 'inline-block' }} />
+              <span style={{ width: 3, height: 9, borderRadius: 2, background: '#FFC93C', transform: 'rotate(20deg)', display: 'inline-block' }} />
+            </span>
+          </div>
+          <p style={{ fontSize: 15, color: '#5A4A6A', maxWidth: 260, lineHeight: 1.45, fontWeight: 500 }}>
+            {t('login.subtitle')}
+          </p>
+          <div style={{ display: 'flex', gap: 8, marginTop: 22, flexWrap: 'wrap' }}>
+            {[{ label: '中文', active: true }, { label: '한국어' }, { label: 'English' }, { label: '日本語' }].map((l, i) => (
+              <span key={i} style={{ fontSize: 14, padding: '6px 12px', borderRadius: 999, background: l.active ? '#A865E0' : '#FAF5FF', color: l.active ? '#fff' : '#2A1A3A', fontWeight: 600 }}>{l.label}</span>
+            ))}
+          </div>
+        </div>
+
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #EFE5F7', borderRadius: 14, padding: '8px 14px' }}>
+            <div style={{ fontSize: 9, color: '#9A8AAA', fontFamily: 'monospace', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>email</div>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontFamily: "'Nunito', sans-serif", fontSize: 15, color: '#2A1A3A', boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ background: '#FFFFFF', border: '1px solid #EFE5F7', borderRadius: 14, padding: '8px 14px' }}>
+            <div style={{ fontSize: 9, color: '#9A8AAA', fontFamily: 'monospace', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>password</div>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontFamily: "'Nunito', sans-serif", fontSize: 15, color: '#2A1A3A', boxSizing: 'border-box' }} />
+          </div>
+
+          <button type="submit" disabled={loginLoading} style={{ marginTop: 6, height: 56, padding: '0 8px 0 22px', border: 'none', borderRadius: 16, background: '#2A1A3A', color: '#FFFFFF', fontFamily: "'Nunito', sans-serif", fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', opacity: loginLoading ? 0.7 : 1 }}>
+            {loginLoading ? '…' : t('login.button')}
+            <span style={{ width: 40, height: 40, borderRadius: 12, background: '#A865E0', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>→</span>
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '2px 0' }}>
+            <div style={{ flex: 1, height: 1, background: '#EFE5F7' }} />
+            <span style={{ fontSize: 11, color: '#9A8AAA', fontFamily: 'monospace' }}>{t('login.socialHint')}</span>
+            <div style={{ flex: 1, height: 1, background: '#EFE5F7' }} />
+          </div>
+
+          {!isNative && (
+            <button type="button" onClick={handleGoogleOAuth} disabled={oauthLoading || loginLoading} style={{ height: 46, border: '1px solid #EFE5F7', borderRadius: 14, background: '#FFFFFF', display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center', color: '#2A1A3A', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Nunito', sans-serif" }}>
+              <GoogleLogo />
+              {t('login.googleButton')}
+            </button>
+          )}
+
+          <div style={{ textAlign: 'center', marginTop: 4 }}>
+            <button type="button" onClick={() => navigate('/register')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#2A1A3A', fontWeight: 700, borderBottom: '1px solid #2A1A3A', padding: 0, fontFamily: "'Nunito', sans-serif" }}>
+              {t('login.createAccount')}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

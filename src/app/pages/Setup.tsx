@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
-import { Input } from '../components/ui/input';
-import { Button } from '../components/ui/button';
 import { ToneSettingsUI } from '../../components/ToneSettingsUI';
 import { t, langLabel } from '../../i18n';
 import { saveChatToCloud } from '../lib/chatHistory';
@@ -45,54 +43,65 @@ export function Setup() {
     navigate(`/chat/${chatData.id}`);
   };
 
+  const SANS = "'Nunito','Noto Sans KR','Zen Maru Gothic','Noto Sans SC',system-ui,sans-serif";
+  const MONO = "'JetBrains Mono',ui-monospace,monospace";
+
   return (
-    <div className="min-h-full px-6 py-8" style={{ backgroundColor: '#FFFBF5', paddingTop: 'calc(env(safe-area-inset-top) + 2rem)' }}>
+    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', background: '#FFFFFF', fontFamily: SANS }}>
+      {/* Back button */}
       <button
         onClick={() => navigate(-1)}
-        className="fixed z-50 flex items-center gap-2 transition-opacity hover:opacity-70"
-        style={{ top: 'calc(env(safe-area-inset-top) + 1rem)', left: '1.5rem' }}
+        style={{ position: 'fixed', zIndex: 50, top: 'calc(env(safe-area-inset-top) + 1rem)', left: '24px', display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }}
       >
-        <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
-        <span style={{ fontSize: '14px', color: '#6B5B95' }}>{t('settings.back')}</span>
+        <ArrowLeft className="w-5 h-5" style={{ color: '#2A1A3A' }} />
       </button>
-      <div className="max-w-2xl mx-auto pt-10">
-      <h1 className="text-3xl mb-6" style={{ fontWeight: 700, color: '#6B5B95' }}>
-        {t('setup.title')} ({langLabel(sourceLang)} → {langLabel(targetLang)})
-      </h1>
-      <div className="space-y-10">
-        {/* Idol Name Input */}
-        <div>
-          <h2 className="mb-1" style={{ fontSize: '16px', fontWeight: 600, color: '#6B5B95' }}>{t('setup.chatName')}</h2>
-          <p className="mb-4" style={{ fontSize: '12px', color: '#9B8FA6' }}>{t('setup.chatNamePlaceholder')}</p>
-          <Input
-            type="text"
-            placeholder={t('setup.chatNamePlaceholder')}
-            value={idolName}
-            onChange={e => setIdolName(e.target.value)}
-            className="w-full h-12 px-5 border-0 shadow-md"
-            style={{ backgroundColor: '#FFFFFF', borderRadius: '24px', fontSize: '16px', color: '#6B5B95' }}
+
+      {/* Content */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '0 22px 16px', paddingTop: 'calc(env(safe-area-inset-top) + 3.5rem)' }}>
+        <div style={{ fontFamily: MONO, fontSize: 10, color: '#9A8AAA', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>{t('setup.step')}</div>
+        <h1 style={{ fontFamily: SANS, fontSize: 34, lineHeight: 1.05, fontWeight: 800, color: '#2A1A3A', letterSpacing: '-0.02em', margin: '0 0 22px' }}>{t('setup.headline')}</h1>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {/* Chat name */}
+          <div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: '#9A8AAA', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>{t('setup.chatName')}</div>
+            <div style={{ background: '#FFFFFF', border: '1px solid #EFE5F7', borderRadius: 16, padding: 14 }}>
+              <input
+                type="text"
+                placeholder={t('setup.chatNamePlaceholder')}
+                value={idolName}
+                onChange={e => setIdolName(e.target.value)}
+                style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontFamily: SANS, fontSize: 22, fontWeight: 800, color: '#2A1A3A', boxSizing: 'border-box' }}
+              />
+            </div>
+          </div>
+
+          {/* Tone Settings UI */}
+          <ToneSettingsUI
+            isPolite={isPolite}
+            setIsPolite={setIsPolite}
+            vibes={vibes}
+            setVibes={setVibes}
+            personaPrompt={personaPrompt}
+            setPersonaPrompt={setPersonaPrompt}
           />
-        </div>
-        {/* Tone Settings UI */}
-        <ToneSettingsUI
-          isPolite={isPolite}
-          setIsPolite={setIsPolite}
-          vibes={vibes}
-          setVibes={setVibes}
-          personaPrompt={personaPrompt}
-          setPersonaPrompt={setPersonaPrompt}
-        />
-        {/* Start Chat Button */}
-        <div className="pt-4">
-          <Button
+
+          {/* Start Chat button */}
+          <button
             onClick={handleStartChat}
-            className="w-full h-14 border-0 shadow-lg"
-            style={{ backgroundColor: '#B8A9D4', color: '#FFFFFF', borderRadius: '24px', fontSize: '16px', fontWeight: 600 }}
+            style={{
+              width: '100%', height: 56, padding: '0 8px 0 22px', border: 'none', borderRadius: 16,
+              background: '#2A1A3A', color: '#FFFFFF', fontFamily: SANS,
+              fontSize: 15, fontWeight: 600, display: 'flex', alignItems: 'center',
+              justifyContent: 'space-between', cursor: 'pointer', marginBottom: 12,
+            }}
           >
             {t('setup.startChat')}
-          </Button>
+            <span style={{ width: 40, height: 40, borderRadius: 12, background: '#A865E0', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </button>
         </div>
-      </div>
       </div>
     </div>
   );

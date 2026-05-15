@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { ArrowLeft, Upload, Pencil, Check } from 'lucide-react';
-import { Button } from '../components/ui/button';
 import { ToneSettingsUI } from '../../components/ToneSettingsUI';
 import { t, getSystemLang } from '../../i18n';
 import { VOICES } from './VoiceSelect';
@@ -174,52 +173,62 @@ export function Settings() {
   const tabLabel = (tab: Tab) => t(`settings.tab${tab.charAt(0).toUpperCase() + tab.slice(1)}` as any);
 
   return (
-    <div className="min-h-full flex flex-col overflow-hidden" style={{ backgroundColor: '#FFFBF5' }}>
+    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#FFFFFF', fontFamily: "'Nunito', -apple-system, system-ui, sans-serif" }}>
       {/* Fixed header */}
-      <div
-        className="flex-shrink-0 px-6"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)', paddingBottom: '0.75rem', backgroundColor: '#FFFBF5' }}
-      >
-        {/* Back + Title row */}
-        <div className="flex items-center gap-3 mb-5">
-          <button onClick={handleBack} className="p-2 -ml-2 transition-opacity hover:opacity-70">
-            <ArrowLeft className="w-5 h-5" style={{ color: '#6B5B95' }} />
+      <div style={{ flexShrink: 0, padding: '0 22px', paddingTop: 'calc(env(safe-area-inset-top) + 52px)', paddingBottom: '0.75rem', background: '#FFFFFF' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <button onClick={handleBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 8px 8px 0', display: 'flex', alignItems: 'center' }}>
+            <ArrowLeft className="w-5 h-5" style={{ color: '#2A1A3A' }} />
           </button>
-          <h1 className="text-xl" style={{ fontWeight: 700, color: '#6B5B95' }}>{t('settings.title')}</h1>
+          <div style={{ flex: 1 }} />
+          {hasToneChanges && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '0.08em', color: '#9A8AAA' }}>edited</span>}
+        </div>
+        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9A8AAA', marginBottom: 4 }}>chat settings</div>
+        <h1 style={{ fontFamily: "'Nunito',sans-serif", fontSize: 32, lineHeight: 1.05, fontWeight: 800, color: '#2A1A3A', margin: '0 0 4px', letterSpacing: '-0.02em' }}>{chatData.name}</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18 }}>
+          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '0.08em', color: '#9A8AAA' }}>
+            {(chatData.sourceLang || 'ZH').toUpperCase()} → {(chatData.targetLang || 'KO').toUpperCase()}
+          </span>
         </div>
 
         {/* Tab bar */}
-        <div className="flex p-1 rounded-2xl" style={{ backgroundColor: '#EDE8F5' }}>
+        <div style={{ background: '#FAF5FF', padding: 4, borderRadius: 14, display: 'flex', marginBottom: 6 }}>
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className="flex-1 py-2 text-sm transition-all"
               style={{
-                borderRadius: '14px',
-                backgroundColor: activeTab === tab ? '#B8A9D4' : 'transparent',
-                color: activeTab === tab ? '#fff' : '#9B8FA6',
-                fontWeight: activeTab === tab ? 600 : 400,
+                flex: 1, height: 38, fontSize: 13, border: 'none', cursor: 'pointer',
+                borderRadius: 10, position: 'relative',
+                background: activeTab === tab ? '#FFFFFF' : 'transparent',
+                color: activeTab === tab ? '#2A1A3A' : '#9A8AAA',
+                fontWeight: activeTab === tab ? 700 : 600,
+                boxShadow: activeTab === tab ? '0 1px 3px rgba(42,26,58,.06)' : 'none',
+                fontFamily: "'Nunito', sans-serif",
+                transition: 'all .15s',
               }}
             >
               {tabLabel(tab)}
+              {activeTab === tab && (
+                <span style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)', width: 18, height: 2, borderRadius: 2, background: '#A865E0' }} />
+              )}
             </button>
           ))}
         </div>
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 22px' }}>
 
         {/* TONE TAB */}
         {activeTab === 'tone' && (
-          <div className="space-y-8">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {/* Chat Name */}
             <div>
-              <h2 className="mb-3" style={{ fontSize: '13px', fontWeight: 600, color: '#9B8FA6', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#9A8AAA', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
                 {t('settings.chatName')}
-              </h2>
-              <div className="flex items-center gap-2 px-4 h-12 shadow-sm" style={{ backgroundColor: '#FFFFFF', borderRadius: '16px' }}>
+              </div>
+              <div style={{ background: '#FFFFFF', border: '1px solid #EFE5F7', borderRadius: 14, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
                 {isEditingName ? (
                   <>
                     <input
@@ -227,18 +236,17 @@ export function Settings() {
                       value={chatName}
                       onChange={e => setChatName(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') setIsEditingName(false); }}
-                      className="flex-1 border-0 outline-none bg-transparent"
-                      style={{ fontSize: '15px', color: '#6B5B95' }}
+                      style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 15, color: '#2A1A3A', fontFamily: "'Nunito', sans-serif" }}
                     />
-                    <button onClick={() => setIsEditingName(false)}>
-                      <Check className="w-4 h-4" style={{ color: '#6B5B95' }} />
+                    <button onClick={() => setIsEditingName(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                      <Check className="w-4 h-4" style={{ color: '#8B3FD1' }} />
                     </button>
                   </>
                 ) : (
                   <>
-                    <span className="flex-1" style={{ fontSize: '15px', color: '#6B5B95' }}>{chatName}</span>
-                    <button onClick={() => setIsEditingName(true)}>
-                      <Pencil className="w-3.5 h-3.5" style={{ color: '#9B8FA6' }} />
+                    <span style={{ flex: 1, fontSize: 15, color: '#2A1A3A' }}>{chatName}</span>
+                    <button onClick={() => setIsEditingName(true)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                      <Pencil className="w-3.5 h-3.5" style={{ color: '#9A8AAA' }} />
                     </button>
                   </>
                 )}
@@ -255,116 +263,139 @@ export function Settings() {
             />
 
             <div style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}>
-              <Button
+              <button
                 onClick={() => { void handleSaveTone(); }}
                 disabled={!hasToneChanges}
-                className="w-full h-14 border-0 shadow-lg"
                 style={{
-                  backgroundColor: hasToneChanges ? '#B8A9D4' : '#D8D0E3',
-                  color: '#FFFFFF',
-                  borderRadius: '24px',
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  opacity: hasToneChanges ? 1 : 0.6,
-                  cursor: hasToneChanges ? 'pointer' : 'not-allowed',
+                  width: '100%', height: 56, padding: '0 8px 0 22px', border: 'none', borderRadius: 16,
+                  background: hasToneChanges ? '#2A1A3A' : '#C5BACF', color: '#FFFFFF',
+                  fontFamily: "'Nunito', sans-serif", fontSize: 15, fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  cursor: hasToneChanges ? 'pointer' : 'not-allowed', opacity: hasToneChanges ? 1 : 0.6,
                 }}
               >
                 {t('settings.save')}
-              </Button>
+                <span style={{ width: 40, height: 40, borderRadius: 12, background: '#8B3FD1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>→</span>
+              </button>
             </div>
           </div>
         )}
 
         {/* BACKGROUND TAB */}
-        {activeTab === 'background' && (
-          <div className="space-y-5" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}>
-            <p style={{ fontSize: '13px', color: '#9B8FA6' }}>
-              {backgroundImage ? t('settings.applied') : t('settings.tapToUpload')}
-            </p>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="relative w-full cursor-pointer transition-opacity hover:opacity-90 shadow-md"
-              style={{
-                height: '220px',
-                backgroundColor: backgroundImage ? 'transparent' : '#FFFFFF',
-                borderRadius: '24px',
-                border: backgroundImage ? 'none' : '2px dashed #D4C4E8',
-              }}
-            >
-              {backgroundImage ? (
-                <img src={backgroundImage} alt="Background" className="w-full h-full object-cover" style={{ borderRadius: '24px' }} />
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <div className="w-14 h-14 flex items-center justify-center" style={{ backgroundColor: '#E6E6FA', borderRadius: '16px' }}>
-                    <Upload className="w-7 h-7" style={{ color: '#6B5B95' }} />
+        {activeTab === 'background' && (() => {
+          const BG_PRESETS = [
+            'linear-gradient(135deg, #FFD1DC 0%, #A865E0 60%, #B4DFE5 100%)',
+            'linear-gradient(135deg, #FFC93C 0%, #E84B91 100%)',
+            'linear-gradient(135deg, #A8E6CF 0%, #C8B6FF 100%)',
+            'linear-gradient(135deg, #FFE5B4 0%, #FFB4D8 100%)',
+          ];
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}>
+              {/* preview */}
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9A8AAA' }}>preview</div>
+              <div style={{
+                height: 180, borderRadius: 20, overflow: 'hidden', cursor: 'pointer',
+                background: backgroundImage
+                  ? (backgroundImage.startsWith('linear-gradient') ? backgroundImage : 'transparent')
+                  : '#FFFFFF',
+                border: backgroundImage ? 'none' : '1.5px dashed #EFE5F7',
+                position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: 4,
+              }} onClick={() => !backgroundImage && fileInputRef.current?.click()}>
+                {backgroundImage && !backgroundImage.startsWith('linear-gradient') && (
+                  <img src={backgroundImage} alt="Background" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                )}
+                {backgroundImage && (
+                  <>
+                    <div style={{ position: 'absolute', left: 14, bottom: 12, padding: '4px 10px', borderRadius: 999, background: 'rgba(26,14,38,.55)', color: '#FFFFFF', fontFamily: "'JetBrains Mono',monospace", fontSize: 9, letterSpacing: '0.08em' }}>
+                      CUSTOM
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); handleRemoveBackground(); }} style={{ position: 'absolute', right: 10, top: 10, width: 30, height: 30, borderRadius: 15, background: 'rgba(26,14,38,.55)', color: '#FFFFFF', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </>
+                )}
+                {!backgroundImage && (
+                  <div style={{ textAlign: 'center', color: '#9A8AAA' }}>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 6 }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, letterSpacing: '0.06em' }}>TAP TO UPLOAD</div>
                   </div>
-                  <p style={{ fontSize: '14px', color: '#9B8FA6' }}>{t('settings.tapToUpload')}</p>
-                </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={e => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => setCropSrc(reader.result as string);
-                    reader.readAsDataURL(file);
-                  }
-                  e.target.value = '';
-                }}
-              />
-            </div>
-            {backgroundImage && (
-              <button
-                type="button"
-                onClick={handleRemoveBackground}
-                className="w-full text-center py-2 transition-opacity hover:opacity-70"
-                style={{ fontSize: '13px', color: '#9B8FA6' }}
-              >
-                {t('settings.removeBackground')}
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) { const reader = new FileReader(); reader.onloadend = () => setCropSrc(reader.result as string); reader.readAsDataURL(file); }
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+
+              {/* presets */}
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9A8AAA' }}>presets</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                {BG_PRESETS.map((g, i) => {
+                  const active = backgroundImage === g;
+                  return (
+                    <button key={i} onClick={() => {
+                      const updated = { ...chatData!, background: g };
+                      setChatData(updated); setBackgroundImage(g); autoSave(updated, 'currentChat');
+                    }} style={{
+                      height: 64, borderRadius: 14, border: active ? '2px solid #2A1A3A' : '1px solid #EFE5F7',
+                      background: g, cursor: 'pointer', padding: 0,
+                      boxShadow: active ? '0 4px 12px rgba(168,101,224,.25)' : 'none',
+                    }}/>
+                  );
+                })}
+              </div>
+
+              {/* upload */}
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9A8AAA' }}>or upload your own</div>
+              <button onClick={() => fileInputRef.current?.click()} style={{
+                width: '100%', height: 48, borderRadius: 14, border: '1.5px dashed #EFE5F7',
+                background: 'transparent', color: '#5A4A6A', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                fontSize: 14, fontWeight: 600,
+              }}>
+                <Upload className="w-4 h-4" style={{ color: '#9A8AAA' }} />
+                {t('settings.tapToUpload')}
               </button>
-            )}
-          </div>
-        )}
+            </div>
+          );
+        })()}
 
         {/* VOICE TAB */}
         {activeTab === 'voice' && (
-          <div className="space-y-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}>
             {VOICES.map((v) => (
               <button
                 key={v.id}
                 onClick={() => handleSelectVoice(v.id)}
-                className="w-full flex items-center gap-3 p-4 transition-all"
                 style={{
-                  backgroundColor: voice === v.id ? '#E6E6FA' : '#FFFFFF',
-                  borderRadius: '16px',
-                  border: voice === v.id ? '2px solid #B8A9D4' : '2px solid transparent',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: 16,
+                  background: voice === v.id ? '#FAF5FF' : '#FFFFFF',
+                  border: voice === v.id ? '1.5px solid #2A1A3A' : '1px solid #EFE5F7',
+                  borderRadius: 14, cursor: 'pointer',
                 }}
               >
                 <div
-                  className="w-6 h-6 flex items-center justify-center flex-shrink-0"
                   style={{
-                    borderRadius: '50%',
-                    border: voice === v.id ? 'none' : '2px solid #D4C4E8',
-                    backgroundColor: voice === v.id ? '#B8A9D4' : 'transparent',
+                    width: 24, height: 24, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: voice === v.id ? 'none' : '2px solid #EFE5F7',
+                    background: voice === v.id ? '#8B3FD1' : 'transparent',
                   }}
                 >
-                  {voice === v.id && <Check className="w-3.5 h-3.5 text-white" />}
+                  {voice === v.id && <Check className="w-3.5 h-3.5" style={{ color: '#fff' }} />}
                 </div>
-                <span className="flex-1 text-left" style={{ fontSize: '15px', fontWeight: voice === v.id ? 600 : 400, color: '#6B5B95' }}>
+                <span style={{ flex: 1, textAlign: 'left', fontSize: 15, fontWeight: voice === v.id ? 600 : 400, color: '#2A1A3A' }}>
                   {v.label[lang]}
                 </span>
                 {v.id && (
                   <button
                     onClick={(e) => { void handleDemo(v.id, e); }}
-                    className="p-2 flex-shrink-0"
+                    style={{ padding: 8, background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
                     disabled={playingId === v.id}
                   >
-                    <span style={{ fontSize: '18px' }}>{playingId === v.id ? '⏸' : '▶'}</span>
+                    <span style={{ fontSize: 18 }}>{playingId === v.id ? '⏸' : '▶'}</span>
                   </button>
                 )}
               </button>

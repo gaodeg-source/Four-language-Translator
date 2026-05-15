@@ -17,6 +17,7 @@ import { Collections } from './pages/Collections';
 import { VoiceSelect } from './pages/VoiceSelect';
 import { Register } from './pages/Register';
 import { Profile } from './pages/Profile';
+import { DemoChatSeeder, DemoSettingsSeeder } from './pages/DemoSeeder';
 import { Toaster } from './components/ui/sonner';
 import { Navigate } from 'react-router';
 
@@ -80,6 +81,8 @@ export default function App() {
           <Route path="/collections" element={<Collections />} />
           <Route path="/voice-select" element={<VoiceSelect />} />
           <Route path="/system-settings" element={<SystemSettings />} />
+          <Route path="/demo-chat" element={<DemoChatSeeder />} />
+          <Route path="/demo-settings" element={<DemoSettingsSeeder />} />
           <Route path="/onboarding" element={<Navigate to="/setup" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
